@@ -80,7 +80,7 @@ function register() {
   });
   handle('workspace-delete', name => { store.data.workspaces = store.data.workspaces.filter(w=>w.name!==name); store.write(); return store.public(); });
   handle('export-config', async()=> {
-    const { filePath } = await dialog.showSaveDialog(win,{ defaultPath: 'LumaTerm-ayarlar.json', filters:[{name:'JSON',extensions:['json']}] });
+    const { filePath } = await dialog.showSaveDialog(win,{ defaultPath: 'LumaTerm-settings.json', filters:[{name:'JSON',extensions:['json']}] });
     if(filePath) await fs.writeFile(filePath,JSON.stringify({ ...store.public(), profiles: store.public().profiles.map(({hasSecret,...p})=>p) },null,2));
   });
   handle('import-config', async()=> {

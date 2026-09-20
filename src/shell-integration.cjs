@@ -33,6 +33,7 @@ function powershellScript(settings = {}) {
   const o = promptOptions(settings), c = o.colors;
   return `
 $global:__LumaOriginalPrompt = (Get-Item Function:\\prompt).ScriptBlock
+$global:__LumaGitCache = @{ Path = ''; At = 0L; Text = '' }
 function global:prompt {
     $lumaExitCode = $global:LASTEXITCODE
     $lumaEsc = ([char]27).ToString()
@@ -49,7 +50,11 @@ function global:prompt {
         $lumaPath = '~' + $lumaPath.Substring($HOME.Length)
     }
     $lumaGit = ''
-    ${o.git ? `try {
+    ${o.git ? `$lumaNow = [Environment]::TickCount64
+    if ($global:__LumaGitCache.Path -eq $lumaLocation.Path -and ($lumaNow - $global:__LumaGitCache.At) -lt 1200) {
+        $lumaGit = $global:__LumaGitCache.Text
+    } else {
+    try {
         if ($lumaLocation.Provider.Name -eq 'FileSystem' -and (Get-Command git -ErrorAction Ignore)) {
             $lumaOldLocks = $env:GIT_OPTIONAL_LOCKS
             $env:GIT_OPTIONAL_LOCKS = '0'
@@ -76,7 +81,9 @@ function global:prompt {
             }
             if ($null -eq $lumaOldLocks) { Remove-Item Env:GIT_OPTIONAL_LOCKS -ErrorAction Ignore } else { $env:GIT_OPTIONAL_LOCKS = $lumaOldLocks }
         }
-    } catch {}` : ''}
+    } catch {}
+    $global:__LumaGitCache = @{ Path = $lumaLocation.Path; At = $lumaNow; Text = $lumaGit }
+    }` : ''}
     $global:LASTEXITCODE = $lumaExitCode
     $lumaEsc + '[${ansi(c.path)}m${o.folderIcon}' + $lumaPath + $lumaGit + $lumaEsc + '[0m' + [Environment]::NewLine + $lumaEsc + '[${ansi(c.prompt)}m${o.promptIcon} ' + $lumaEsc + '[0m' + $lumaEsc + ']133;B' + [char]7
 }

@@ -39,7 +39,9 @@ async function remote({win,sessions,id,base,root,fixture,files}){
     assert.equal(localReads,0,'SSH refresh must not read the local filesystem');
     await evaluate('document.getElementById("remote-files").scrollTop=1000000');
     await until(()=>evaluate('[...document.querySelectorAll("#remote-files .file-name")].some(el=>el.textContent==="stress-1499.txt")'),'last virtual row reachable');
-    await evaluate('document.getElementById("remote-files").scrollTop=0');await focus(win);
+    await evaluate('document.getElementById("file-filter").value="stress-1499";document.getElementById("file-filter").dispatchEvent(new Event("input"))');
+    await until(()=>evaluate('document.querySelectorAll("#remote-files .file-row").length===1 && document.querySelector("#remote-files .file-name")?.textContent==="stress-1499.txt"'),'file filter');
+    await evaluate('document.getElementById("file-filter").value="";document.getElementById("file-filter").dispatchEvent(new Event("input"));document.getElementById("remote-files").scrollTop=0');await focus(win);
     const before=fixture.commands.length;
     await win.webContents.insertText('git st');
     await until(()=>evaluate('document.querySelector(".suggestions:not([hidden]) .suggestion span")?.textContent === "git status"'),'SSH suggestions');
@@ -72,8 +74,8 @@ async function remote({win,sessions,id,base,root,fixture,files}){
     assert.equal(sessions.get(id).output.paused,false);
     assert.equal(localReads,0);
     times.sort((a,b)=>a-b);
-    await fs.writeFile(path.join(base,'performance.json'),JSON.stringify({passed:true,remoteEntries:1500,renderedRows:await evaluate('document.querySelectorAll("#remote-files .file-row").length'),sshLocalFileReads:localReads,loopbackEchoMedianMs:Math.round(times[Math.floor(times.length/2)]),loopbackEchoMaxMs:Math.round(times.at(-1)),note:'Loopback fixture and 50ms polling; not a measurement of the user server.',checks:['single active file panel','virtualized files reachable','PowerShell + SSH suggestions','explicit completion acceptance','in-memory history','no password capture','output backpressure drains']},null,2));
-    console.log('PERFORMANCE PASS: virtualized files, SSH echo, parsed output ACKs, suggestions and password privacy');
+    await fs.writeFile(path.join(base,'performance.json'),JSON.stringify({passed:true,remoteEntries:1500,renderedRows:await evaluate('document.querySelectorAll("#remote-files .file-row").length'),sshLocalFileReads:localReads,loopbackEchoMedianMs:Math.round(times[Math.floor(times.length/2)]),loopbackEchoMaxMs:Math.round(times.at(-1)),note:'Loopback fixture and 50ms polling; not a measurement of the user server.',checks:['single active file panel','virtualized files reachable','instant file filter','PowerShell + SSH suggestions','explicit completion acceptance','in-memory history','no password capture','output backpressure drains']},null,2));
+    console.log('PERFORMANCE PASS: virtualized files, instant filtering, SSH echo, parsed output ACKs, suggestions and password privacy');
   }finally{files.list=previous;}
 }
 module.exports={local,remote};

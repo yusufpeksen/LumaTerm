@@ -3,6 +3,16 @@
 All notable changes to LumaTerm are recorded here. Versions follow Semantic
 Versioning and are published from matching `vX.Y.Z` Git tags.
 
+## [0.5.0] - 2026-09-20
+
+- Made English the default language for new installations while retaining the Turkish locale.
+- Rewrote public documentation and community templates for an international audience.
+- Added multiple loopback-only local port forwarding rules to SSH profiles.
+- Added instant filtering for virtualized local and remote file lists.
+- Added sticky navigation to the Settings interface.
+- Reduced repeated Git prompt work with a short per-directory status cache.
+- Added end-to-end tests for SSH tunneling, file filtering, and the updated Settings UI.
+
 ## [0.4.0] - 2026-09-20
 
 - Added a colored two-line prompt with current-directory and icon styling.

@@ -2,12 +2,13 @@ const { Server, utils: { sftp: { OPEN_MODE, STATUS_CODE: C } } } = require('ssh2
 const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
+const net = require('node:net');
 const { utils: { parseKey } } = require('ssh2');
 async function fixture(root) {
   const key = crypto.generateKeyPairSync('rsa',{modulusLength:2048,privateKeyEncoding:{type:'pkcs1',format:'pem'},publicKeyEncoding:{type:'pkcs1',format:'pem'}}).privateKey;
   const userKey=crypto.generateKeyPairSync('rsa',{modulusLength:2048,privateKeyEncoding:{type:'pkcs1',format:'pem'},publicKeyEncoding:{type:'pkcs1',format:'pem'}}).privateKey;
   const allowedKey=parseKey(userKey);
-  const clients=new Set(),commands=[],inputs=[];
+  const clients=new Set(),forwardSockets=new Set(),commands=[],inputs=[];
   const server=new Server({hostKeys:[key]},client=>{
     client.setNoDelay(true);
     clients.add(client);client.on('error',()=>{});client.on('close',()=>clients.delete(client));
@@ -17,7 +18,14 @@ async function fixture(root) {
       if(ctx.method==='publickey'&&ctx.key.algo===allowedKey.type&&ctx.key.data.equals(allowedKey.getPublicSSH())&&(!ctx.signature||allowedKey.verify(ctx.blob,ctx.signature,ctx.hashAlgo)===true))return ctx.accept();
       ctx.reject();
     });
-    client.on('ready',()=>client.on('session',accept=>{
+    client.on('ready',()=>{
+      client.on('tcpip',(accept,reject,info)=>{
+        const socket=net.connect(info.destPort,info.destIP);
+        forwardSockets.add(socket);socket.on('close',()=>forwardSockets.delete(socket));
+        socket.once('connect',()=>{const stream=accept();stream.pipe(socket).pipe(stream);});
+        socket.once('error',()=>{reject();socket.destroy();});
+      });
+      client.on('session',accept=>{
       const session=accept();session.on('pty',accept=>accept());session.on('window-change',accept=>accept?.());
       session.on('shell',accept=>{
         const stream=accept();let line='',password=false,screen=false;
@@ -63,9 +71,10 @@ async function fixture(root) {
         handler('SETSTAT',(id)=>sftp.status(id,C.OK));handler('FSETSTAT',(id)=>sftp.status(id,C.OK));
         sftp.on('close',()=>{for(const item of handles.values())if(item.fd!==undefined)try{fs.closeSync(item.fd);}catch{}});
       });
-    }));
+      });
+    });
   });
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
-  return {port:server.address().port,userKey,commands,inputs,close:()=>{for(const c of clients)c.end();server.close();}};
+  return {port:server.address().port,userKey,commands,inputs,close:()=>{for(const socket of forwardSockets)socket.destroy();for(const c of clients)c.end();server.close();}};
 }
 module.exports={fixture};

@@ -1,7 +1,7 @@
 {
   "name": "lumaterm",
-  "version": "0.4.0",
-  "description": "Windows terminal and SSH workspace",
+  "version": "0.5.0",
+  "description": "Open-source Windows terminal, SSH client, and SFTP workspace",
   "author": "LumaTerm contributors",
   "license": "MIT",
   "private": true,

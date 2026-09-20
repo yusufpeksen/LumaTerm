@@ -18,14 +18,16 @@ module.exports=async({app,win,sessions,store})=>{
   assert.equal(await win.webContents.executeJavaScript('document.querySelector(".feature-cards") === null'),true);
   assert.equal(await win.webContents.executeJavaScript('Boolean(document.getElementById("suggestions-button"))'),true);
   assert.equal(await win.webContents.executeJavaScript('Boolean(document.getElementById("remote-explorer") && document.getElementById("local-explorer"))'),true);
+  assert.equal(await win.webContents.executeJavaScript('Boolean(document.getElementById("file-filter"))'),true);
   await win.webContents.executeJavaScript('document.getElementById("settings-button").click()');
   for(let n=0;n<100&&!await win.webContents.executeJavaScript('Boolean(document.querySelector("select[name=language]"))');n++)await sleep(100);
   assert.equal(await win.webContents.executeJavaScript('Boolean(document.querySelector("input[name=suggestions]"))'),true);
+  assert.equal(await win.webContents.executeJavaScript('Boolean(document.querySelector(".settings-nav"))'),true);
   await win.webContents.executeJavaScript('document.querySelector("select[name=language]").value="en";document.getElementById("settings-submit").click()');
   for(let n=0;n<100&&!await win.webContents.executeJavaScript('document.documentElement.lang === "en"');n++)await sleep(100);
   assert.equal(await win.webContents.executeJavaScript('document.documentElement.lang'),'en');
   assert.equal(store.decrypt(store.encrypt('test-value')),'test-value');
   sessions.closeAll();await sleep(700);
-  await fs.writeFile(path.join(app.getPath('userData'),'package-check.json'),JSON.stringify({passed:true,version:'0.4.0',checks:['packaged renderer','packaged ConPTY DLL','real PowerShell output','colored Git-aware prompt','PowerShell directory tracking','single-context file explorers','command suggestions UI','welcome cards removed','English UI switch','DPAPI encryption']},null,2));
+  await fs.writeFile(path.join(app.getPath('userData'),'package-check.json'),JSON.stringify({passed:true,version:'0.5.0',checks:['packaged renderer','packaged ConPTY DLL','real PowerShell output','colored Git-aware prompt','PowerShell directory tracking','single-context file explorers','file filtering','command suggestions UI','English default UI','DPAPI encryption']},null,2));
   console.log('PACKAGE CHECK PASS');
 };

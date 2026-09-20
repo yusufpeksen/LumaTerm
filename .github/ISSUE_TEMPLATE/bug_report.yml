@@ -1,0 +1,48 @@
+name: Bug report
+description: Report a reproducible problem in LumaTerm
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Remove hostnames, usernames, file paths, credentials, and terminal output containing secrets before submitting.
+  - type: input
+    id: version
+    attributes:
+      label: LumaTerm version
+      placeholder: 0.5.0
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      placeholder: Windows 11 24H2
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: [Local terminal, SSH, SFTP and files, Port forwarding, Settings and UI, Installer and updates, Other]
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: Include the smallest reliable sequence that reproduces the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true

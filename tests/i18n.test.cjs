@@ -6,5 +6,5 @@ test('English translation never rewrites interpolated file names or credentials'
   assert.equal(tr('Ayarlar'),'Settings');
   assert.equal(tr('<button>Bağlantıyı kaydet</button>'),'<button>Save connection</button>');
   assert.equal(msg`<label>Dosya hazır</label>${'Ayarlar / Yeni terminal'}`,'<label>File ready</label>Ayarlar / Yeni terminal');
-  setLanguage('tr');assert.equal(tr('Ayarlar'),'Ayarlar');
+  setLanguage('tr');assert.equal(tr('Ayarlar'),'Ayarlar');setLanguage('en');
 });

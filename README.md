@@ -1,77 +1,106 @@
 # LumaTerm
 
-Windows için Türkçe ve İngilizce arayüzlü, açık kaynak terminal, SSH ve SFTP çalışma alanı. Bu sürüm **0.4 önizlemedir**; çalışan bir masaüstü uygulamasıdır. Windows Terminal'in tüm özellikleriyle birebir eşdeğer olduğu iddia edilmez.
+LumaTerm is an open-source Windows terminal, SSH client, and SFTP workspace. It combines native ConPTY shells, saved SSH connections, remote file management, Git-aware prompts, and reusable workspaces in one desktop application.
 
-## Kurulum ve güncellemeler
+> LumaTerm is currently a preview. It is designed for Windows 10 1809+ and Windows 11 x64 and does not claim full feature parity with Windows Terminal or MobaXterm.
 
-[GitHub Releases](https://github.com/yusufpeksen/LumaTerm/releases/latest) sayfasındaki **LumaTerm-Setup.exe** dosyasını indirip çalıştır. Kurucu masaüstü ve Başlat menüsü kısayollarını oluşturur; Node.js kurulumu gerekmez. İmzasız önizleme sürümlerinde Windows SmartScreen yayıncı uyarısı gösterebilir.
+## Install
 
-Kurulu uygulama açılıştan kısa süre sonra ve ardından dört saatte bir GitHub Releases üzerinde yeni sürüm denetimi yapar. Yeni paket arka planda indirilir; hazır olduğunda uygulama yeniden başlatma izni ister. Güncelleme aynı LumaTerm kurulumu üzerine uygulanır ve `%APPDATA%/lumaterm` altındaki ayarlar ile SSH profilleri korunur.
+Download **[LumaTerm-Setup.exe](https://github.com/yusufpeksen/LumaTerm/releases/latest/download/LumaTerm-Setup.exe)** from the latest GitHub Release. The installer creates Start menu and desktop shortcuts; Node.js is not required.
 
-0.4 sürümünde PowerShell komut satırı renkli ve iki satırlı bir görünüme kavuştu. Güncel klasörü, Git dalını, değişiklik sayısını ve upstream dalına göre ileri/geri durumunu gösterir. Ayarlar'dan Vurgu, Okyanus, Gün batımı veya Tek renk teması seçilebilir; Git bilgisi ve simgeler ayrı ayrı kapatılabilir. CMD renkli klasör ve simge görünümünü, SSH Bash/Zsh oturumları ise dizin takibi etkinleştirildiğinde tema ile Git bilgisini kullanır. Entegrasyonlar yalnızca açık oturumda çalışır; kullanıcı profil dosyalarını değiştirmez.
+Preview builds are currently unsigned, so Windows SmartScreen may display an unknown-publisher warning. Installed builds check GitHub Releases shortly after startup and every four hours. Updates download in the background and preserve settings and SSH profiles under `%APPDATA%/lumaterm`.
 
-Windows 10 1809 veya üzeri / Windows 11 x64 gerekir. Windows PowerShell ve CMD kullanılabilir. PowerShell 7 (`pwsh.exe`) ve WSL (`wsl.exe`) kendi kurulumları varsa açılır. Yerel kabuklar gerçek ConPTY oturumlarıdır; PowerShell komutları, profilleri ve etkileşimli konsol uygulamaları kabuğun kendisinde çalışır.
+## Highlights
 
-## Kullanım
+- **Native Windows terminals:** Windows PowerShell, PowerShell 7, Command Prompt, WSL, and custom executables run through ConPTY.
+- **Modern prompt:** Colored current-directory display with Git branch, clean/dirty state, changed-file count, and upstream ahead/behind indicators.
+- **Prompt themes:** Accent, Ocean, Sunset, and Monochrome presets with independent Git and icon toggles.
+- **SSH profiles:** Save hosts, ports, usernames, passwords, encrypted key passphrases, colors, groups, and initial directories.
+- **Local port forwarding:** Add one or more `localPort:host:port` rules to an SSH profile. LumaTerm binds them to `127.0.0.1` while that session is open.
+- **SFTP workspace:** Browse the active remote directory, filter large listings, upload or download files and folders, rename entries, create folders, and delete files.
+- **Drag and drop:** Upload from Explorer and prepare remote files for dragging back to Explorer or the desktop.
+- **Directory synchronization:** The file panel follows `cd`, `Set-Location`, `Push-Location`, and `Pop-Location` in PowerShell/CMD. Bash and Zsh tracking can be enabled per SSH session.
+- **Multiple sessions:** Open many local or SSH tabs, switch quickly, or show two terminals side by side.
+- **Command suggestions:** Session history, shell commands, common subcommands, and files are suggested without executing anything automatically. Suggestions stay disabled during password input.
+- **Saved workspaces:** Reopen a named collection of local and SSH tabs.
+- **English and Turkish UI:** English is the default for new installations; Turkish remains available in Settings.
 
-- **Yeni terminal:** Varsayılan kabuğu açar. Sol menüde PowerShell, PowerShell 7, CMD ve WSL bulunur. Ayarlarda varsayılan kabuk için başka bir çalıştırılabilir dosyanın yolunu da verebilirsin; alan komut satırı argümanları kabul etmez.
-- **SSH bağlantısı:** `SSH BAĞLANTILARI` yanındaki `+` ile ad, adres, port, kullanıcı, parola veya özel anahtar dosyası kaydet. Parola saklanmazsa bağlanırken sorulur. Şifreli anahtarda parola alanı anahtar şifresidir.
-- **Sunucu kimliği:** İlk bağlantıda SHA-256 parmak izini sunucu yöneticinle doğrula. Kaydedilen kimlik değişirse bağlantı reddedilir. Sunucu meşru biçimde yeniden kurulduysa Ayarlar → Güvenilen sunucular bölümünden eski kaydı unut ve yeni kimliği tekrar doğrula.
-- **Sekmeler:** Birden fazla yerel/uzak oturum birlikte açılır. Üstteki iki sütun simgesi iki oturumu yan yana gösterir. Yeniden bağlan simgesi yeni bir sekme açar; mevcut çıktıyı korur.
-- **Dosya paneli:** Yerel terminalde yalnızca bilgisayarındaki klasör, SSH oturumunda yalnızca uzak sunucudaki klasör gösterilir. Aktif sekme değişince panel de o oturumun güncel dizinine geçer. Klasörlere çift tıkla; adres alanına yol yazarak Enter'a bas. Gizli dosyalar varsayılan olarak görünür.
-- **Akıllı komut satırı:** PowerShell/PowerShell 7 güncel klasörü renkli gösterir. Bir Git deposunda dal adı, değişiklik sayısı, temiz durum ve upstream dalına göre `↑/↓` bilgisi eklenir. CMD güncel klasörü aynı temayla gösterir. Ayarlar → Komut satırı bölümünden tema, Git bilgisi ve simgeler değiştirilebilir; ayarlar yeni açılan oturumlara uygulanır.
-- **Yerel dizin takibi:** PowerShell/PowerShell 7 ve CMD oturumlarında `cd`, `Set-Location`, `Push-Location` ve `Pop-Location` sonrası dosya paneli otomatik güncellenir. Sekmeler kendi dizinlerini korur; arka plandaki oturum aktif paneli değiştirmez. Entegrasyon oturumluk kurulur ve PowerShell profil dosyalarını değiştirmez. Sonradan prompt fonksiyonunu veya CMD `PROMPT` değişkenini tamamen değiştiren komutlar takibi kaldırabilir. WSL ve özel kabuklar için bu yerel entegrasyon uygulanmaz.
-- **Yükleme:** Explorer'dan veya alt yerel panelden üst uzak panele dosya/klasör sürükle. Yükle ve klasör yükle düğmeleriyle dosya seçimi de yapabilirsin.
-- **İndirme:** Uzak dosyanın indirme düğmesine tıkla veya dosyaya çift tıkla; hedef klasörü Windows klasör seçicisinden belirle.
-- **Doğrudan Explorer'a sürükleme:** Uzak dosyanın üzerine gel, dışa taşıma simgesine tıkla. Önce yerel geçici kopya hazırlanır; açılan “Dosya hazır” penceresindeki dosya düğmesini Explorer'a veya masaüstüne sürükle. Windows'a mevcut bir yerel dosya vermek gerektiğinden bu iki aşamalıdır.
-- **Dosya işlemleri:** Klasör oluşturma, yeniden adlandırma ve silme bulunur. Silme kalıcıdır ve onay ister. Klasör silme yalnızca boş klasörlerde çalışır. Var olan dosyanın üzerine yazmadan önce sorulur.
-- **Dizin takibi:** SSH oturumu Bash/Zsh komut satırındayken `Dizini takip et` seçeneğini etkinleştir. Oturumluk prompt dosya panelini terminalin dizinine taşır ve seçili tema ile Git dalı/değişiklik bilgisini gösterir. Uzak ayar dosyaları değiştirilmez. Farklı kabuklarda panel yolunu elle değiştir; paneldeki terminal simgesi seçili klasöre `cd` gönderir.
-- **Çalışma Alanları:** Sol bölümdeki kaydet simgesi açık oturumları bir isim altında saklar. Sonraki açılışta gruba tıklamak bütün bağlantıları yeniden açar. Bu özellik terminal çıktılarını, çalışan süreçleri veya uzak `tmux` oturumlarını kaydetmez.
-- **Komut önerileri:** Yazarken oturum geçmişi, kabuk komutları, yaygın alt komutlar ve açık dosya listesinden öneriler gösterilir. `Ctrl+Space` listeyi açar, `Alt+↑/↓` seçimi değiştirir, `Ctrl+→` seçileni satıra ekler, `Esc` kapatır. `Tab` kabuğun kendi tamamlamasına bırakılmıştır. Geçmiş yalnızca açık oturumun belleğinde tutulur.
-- **Ayarlar:** Üç uygulama teması, dört komut satırı teması, vurgu rengi, Git/simge seçenekleri, yazı tipi/boyutu, satır aralığı, imleç, geçmiş uzunluğu, başlangıç klasörü, kabuk, kısayollar, komut önerileri, gizli dosyalar, SSH canlı tutma aralığı, seçerek kopyalama ve kapanış onayı.
-- **Yedekleme:** Ayarları JSON olarak dışa/içe aktarabilirsin. Dışa aktarılan dosya parola içermez. İçe aktarma dış dosyadaki sunucu güven kayıtlarını kabul etmez.
+## Getting started
 
-## Varsayılan kısayollar
+### Local terminals
 
-| İşlem | Kısayol |
+Select PowerShell, PowerShell 7, Command Prompt, or WSL from the sidebar. You can configure another executable and a start directory in Settings. LumaTerm does not modify PowerShell profile files; prompt and directory integration exists only for the current session.
+
+### SSH and SFTP
+
+1. Select the **+** button next to **SSH Connections**.
+2. Enter the host, port, username, and password or private key.
+3. Verify the server's SHA-256 host fingerprint with the server administrator on first connection.
+4. Use the file panel to browse and transfer remote files.
+
+If a stored host key changes, LumaTerm refuses the connection. Remove the old key under **Settings → Security** only after independently confirming that the change is legitimate.
+
+### Local port forwarding
+
+Enter one rule per line in an SSH profile:
+
+```text
+8080:localhost:80
+15432:db.internal:5432
+```
+
+These examples expose the remote web service at `127.0.0.1:8080` and the remote database at `127.0.0.1:15432`. Listeners close with the SSH session and never bind to external network interfaces.
+
+### File transfers
+
+- Drop local files or folders onto the remote file panel to upload them.
+- Double-click a remote file or use its download action to choose a destination.
+- Use the external-drag action to stage a remote file, then drag the prepared copy into Explorer.
+- Use the filter above the file panel to narrow large local or remote directories without another server request.
+
+## Default shortcuts
+
+| Action | Shortcut |
 |---|---|
-| Yeni terminal | Ctrl+Shift+T |
-| Sekmeyi kapat | Ctrl+Shift+W |
-| Sonraki / önceki sekme | Ctrl+Tab / Ctrl+Shift+Tab |
-| Terminalde ara | Ctrl+Shift+F |
-| Komut paleti | Ctrl+Shift+P |
-| Ayarlar | Ctrl+, |
-| Kopyala | Ctrl+Shift+C |
-| Yapıştır | Ctrl+V |
-| Önerileri aç | Ctrl+Space |
-| Öneriyi ekle | Ctrl+Sağ ok |
+| New terminal | `Ctrl+Shift+T` |
+| Close tab | `Ctrl+Shift+W` |
+| Next / previous tab | `Ctrl+Tab` / `Ctrl+Shift+Tab` |
+| Search terminal output | `Ctrl+Shift+F` |
+| Command palette | `Ctrl+Shift+P` |
+| Settings | `Ctrl+,` |
+| Copy | `Ctrl+Shift+C` |
+| Paste | `Ctrl+V` |
+| Open suggestions | `Ctrl+Space` |
+| Insert suggestion | `Ctrl+Right Arrow` |
 
-Terminalde sağ tık seçili metni kopyalar; seçim yoksa yapıştırır. Çok satırlı pano içeriği yapıştırılırken onay istenir. Terminalin kaydet simgesi mevcut kaydırma geçmişini metin dosyasına çıkarır.
+Right-click copies selected terminal text or pastes when nothing is selected. LumaTerm asks before pasting multiple lines.
 
-## Veriler ve güvenlik
+## Security and privacy
 
-Normal kullanımdaki ayar dosyası Electron'un Windows kullanıcı veri klasöründe, genellikle `%APPDATA%/lumaterm/lumaterm.json` yolundadır. Sunucu adresleri ve kullanıcı adları okunabilir metadata olarak; parola ve anahtar şifreleri Windows DPAPI ile şifrelenerek saklanır. Windows hesabına tam erişimi olan süreçlere karşı ayrı bir parola kasası koruması vaat edilmez. Özel anahtar dosyası kopyalanmaz; yolu saklanır.
+- Passwords and key passphrases are encrypted with Windows DPAPI for the current Windows account.
+- Hostnames and usernames remain readable profile metadata.
+- Private key files are referenced by path and are never copied into LumaTerm storage.
+- The renderer uses Electron context isolation and sandboxing with Node.js access disabled.
+- File names received over SFTP are validated against path traversal and Windows reserved names.
+- Symbolic links are not transferred automatically, and partial downloads use temporary `.part` files.
+- Exported configuration files never contain passwords or trusted-host records.
+- Terminal exports can contain secrets printed by commands; review them before sharing.
 
-Arayüzde Node.js erişimi kapalıdır; context isolation ve sandbox açıktır. IPC çağrıları yerel uygulama penceresiyle sınırlandırılmıştır. SFTP'den gelen dosya adları indirme sırasında Windows yolu dışına çıkmaya karşı doğrulanır. Sembolik bağlantılar otomatik olarak aktarılmaz. Kısmi indirmeler `.part` dosyasına yazılır; başarılı bitince hedef adına taşınır.
+See [SECURITY.md](SECURITY.md) to report a vulnerability privately.
 
-Explorer sürüklemesi için hazırlanan geçici kopyalar Windows `%TEMP%` klasöründe `lumaterm-drag-*` adıyla kalabilir. Terminal çıktısını dışa aktarırken içinde komutlarına bağlı olarak sırlar bulunabileceğini dikkate al.
+## Current limitations
 
-Kaynak kod [MIT Lisansı](LICENSE) ile yayımlanır. Depoya gerçek sunucu adresi, kullanıcı verisi, parola, özel anahtar, sertifika veya oluşturulmuş test verisi eklenmez. Güvenlik açıkları için [güvenlik politikasını](SECURITY.md), katkı göndermek için [katkı rehberini](CONTRIBUTING.md) kullan.
+- No X11 server, RDP/VNC client, serial terminal, MOSH, or browser-based remote desktop.
+- No ProxyJump, SSH agent forwarding, remote port forwarding, dynamic SOCKS proxy, FIDO keys, or interactive MFA flow yet.
+- No transfer pause/resume, persistent transfer queue, or automatic recovery of partial remote uploads.
+- Bash/Zsh directory tracking can conflict with `tmux`, nested SSH sessions, or prompt frameworks that replace `PROMPT_COMMAND` or `precmd_functions`.
+- The file manager does not yet edit remote files, permissions, or ownership and does not follow symbolic links.
+- Windows remote shells do not receive automatic directory tracking.
+- Builds are unsigned and can trigger SmartScreen.
 
-## Kapsam ve bilinen sınırlar
+## Development
 
-- Windows Terminal'in tüm özelliklerinin kopyası değildir. Quake modu, GPU shader/arka plan resimleri, yönetici profilleri, esnek çoklu bölme ağacı ve Windows Terminal JSON ayar uyumluluğu yoktur.
-- SSH jump host/ProxyJump, port yönlendirme, agent forwarding, donanımsal FIDO anahtarları ve etkileşimli MFA akışı bu sürümde uygulanmadı.
-- Otomatik yeniden bağlanma, aktarım duraklatma/sürdürme ve aktarım kuyruğu yönetimi yoktur. Bağlantı kapatılınca aktarım kesilir; otomatik telafi yapılmaz. Başarısız yüklemede uzak tarafta kısmi dosya kalabilir.
-- SFTP dosya yöneticisi tek dosya/klasör sürükleme sunar; Windows dosya seçme penceresiyle birden fazla kaynak seçilebilir. Uzak dosyayı doğrudan dışarı sürüklemek önce hazırlama adımı gerektirir.
-- Dizin takibi Bash/Zsh prompt'una bağlıdır; `tmux`, iç içe SSH, özel prompt framework'leri ve diğer kabuklarda ayrıca doğrulanmalıdır. Windows uzak kabukları için otomatik `cd`/takip uyarlaması yoktur.
-- Uzak dosya düzenleyicisi, izin/sahiplik editörü, dosya araması ve sembolik bağlantı takibi yoktur.
-- Komut önerileri yerleşik katalog, geçerli dosya listesi ve oturum içi geçmişe dayanır; uzak kabuğun kurulu tüm komutlarını veya bağlama duyarlı dil sunucusu analizini keşfetmez.
-- Uygulama şu anda kod imzası olmadan paketlenir; bu nedenle Windows ilk kurulumda SmartScreen uyarısı gösterebilir.
-
-## Geliştirme ve doğrulama
-
-Node.js 22.12+ ile:
+Requirements: Windows and Node.js 22.12 or newer.
 
 ```powershell
 npm ci
@@ -79,18 +108,20 @@ npm run build
 npm start
 ```
 
+Validation and packaging:
+
 ```powershell
 npm test
 npm run smoke
 npm run package
 ```
 
-`npm run package`, `release/LumaTerm-Setup.exe` ve otomatik güncellemenin kullandığı `latest.yml` dosyasını üretir. Yeni sürüm yayımlamak için önce sürümü SemVer ile artır (`npm version patch`, `minor` veya `major`), ardından `main` dalını ve oluşan `vX.Y.Z` etiketini GitHub'a gönder. Etiket iş akışı testleri çalıştırır, Setup.exe'yi üretir ve GitHub Release varlığı olarak yayımlar. Aynı sürüm etiketi tekrar kullanılmaz.
+`npm run smoke` launches an isolated Electron instance, a real PowerShell/ConPTY process, and a loopback SSH/SFTP fixture. It verifies rendering, multiple sessions, DPAPI storage, password and key authentication, local port forwarding, host-key protection, transfers, file operations, directory tracking, suggestions, and output backpressure.
 
-`npm run smoke`, ayrı test veri klasöründe gizli bir Electron penceresi, gerçek PowerShell/ConPTY ve yalnızca `127.0.0.1` üzerinde geçici bir SSH/SFTP test sunucusu açar. Renderer, sekmeler, bölünmüş görünüm, DPAPI, parola/anahtar doğrulaması, sunucu kimliği, dosya/klasör aktarımı ve dosya işlemlerini kontrol eder. `test-results/smoke.json` sonuçları; PNG dosyaları test ekranlarını içerir.
+`npm run package` creates `release/LumaTerm-Setup.exe`, its block map, and `latest.yml`. Pushing a matching `vX.Y.Z` tag runs the Windows release workflow and publishes those assets to GitHub Releases.
 
-Gerçek sunucunun kimliği veya parolası sağlanmadığı için kişisel sunucunda bağlantı testi yapılmadı. Explorer'a bırakmanın son Windows fare hareketi otomatik test edilmedi; hazırlanan yerel dosyanın içeriği kontrol edildi. PowerShell 7/WSL ve farklı terminal programları ayrıca kendi kurulumlarında doğrulanmalıdır.
+## Contributing
 
-0.4 regresyon testleri gerçek PowerShell ve CMD süreçlerinde renkli prompt üretimini, Git durumunu, dizin bildirimlerini, Türkçe/boşluk/yüzde/apostrof içeren yolları, göreli dizinleri, sekme geçişlerini, başarısız `cd` sonrasında doğru konumun korunmasını, dil geçişini, tek aktif dosya panelini, büyük uzak klasörlerin sanal çizimini, SSH giriş gecikmesini, PowerShell/CMD/SSH önerilerini, öneri kabulünü ve parola alanı gizliliğini kontrol eder. `node scripts/check-localization.cjs` uygulama metinlerinin çeviri kapsamını denetler.
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. LumaTerm is distributed under the [MIT License](LICENSE).
 
-Teknik kaynaklar: [Microsoft node-pty](https://github.com/microsoft/node-pty), [ssh2](https://github.com/mscdex/ssh2), [Electron güvenliği](https://www.electronjs.org/docs/latest/tutorial/security), [Electron safeStorage](https://www.electronjs.org/docs/latest/api/safe-storage), [xterm.js](https://xtermjs.org/).
+Core projects used by LumaTerm include [node-pty](https://github.com/microsoft/node-pty), [ssh2](https://github.com/mscdex/ssh2), [Electron](https://www.electronjs.org/), and [xterm.js](https://xtermjs.org/).

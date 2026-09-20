@@ -2,7 +2,7 @@ const { tr, msg } = require('./i18n.cjs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const DEFAULTS = {
-  language: 'tr', theme: 'midnight', accent: '#8b9cff', fontFamily: 'Cascadia Code, Consolas, monospace', fontSize: 14,
+  language: 'en', theme: 'midnight', accent: '#8b9cff', fontFamily: 'Cascadia Code, Consolas, monospace', fontSize: 14,
   lineHeight: 1.2, cursorStyle: 'bar', cursorBlink: true, scrollback: 10000,
   defaultShell: 'powershell.exe', startDirectory: '', copyOnSelect: false, confirmClose: true,
   showHidden: true, keepaliveInterval: 15000, terminalBell: false, suggestions: true,
@@ -16,7 +16,7 @@ function settings(input = {}) {
   }
   if (!['midnight','light','forest'].includes(out.theme)) out.theme = 'midnight';
   if (!['accent','ocean','sunset','mono'].includes(out.promptTheme)) out.promptTheme = 'accent';
-  if (!['tr','en'].includes(out.language)) out.language = 'tr';
+  if (!['tr','en'].includes(out.language)) out.language = 'en';
   if (!/^#[a-f0-9]{6}$/i.test(out.accent)) out.accent = DEFAULTS.accent;
   if (!['bar','block','underline'].includes(out.cursorStyle)) out.cursorStyle = 'bar';
   return out;
@@ -26,10 +26,18 @@ function profile(input) {
   if (!input.name?.trim() || !input.host?.trim() || !input.username?.trim()) throw new Error(tr('Ad, sunucu ve kullanıcı adı gerekli.'));
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error(tr('Port 1–65535 arasında olmalı.'));
   if (/[\x00-\x1f\x7f]/.test(input.initialDirectory || '')) throw new Error(tr('Dizin kontrol karakteri içeremez.'));
+  const sourceForwards = Array.isArray(input.forwards) ? input.forwards : String(input.forwards || '').split(/\r?\n/).filter(Boolean).map(line => {
+    const match = line.trim().match(/^(\d{1,5}):([^:\s]+):(\d{1,5})$/);
+    if (!match) throw new Error(tr('Port yönlendirme biçimi geçersiz. Her satır localPort:host:port olmalıdır.'));
+    return { localPort: Number(match[1]), host: match[2], port: Number(match[3]) };
+  });
+  const forwards = sourceForwards.map(item => ({ localPort: Number(item.localPort), host: String(item.host || '').trim(), port: Number(item.port) }));
+  if (forwards.some(item => !Number.isInteger(item.localPort) || item.localPort < 1 || item.localPort > 65535 || !item.host || !Number.isInteger(item.port) || item.port < 1 || item.port > 65535)) throw new Error(tr('Port yönlendirme adresi veya portu geçersiz.'));
+  if (new Set(forwards.map(item => item.localPort)).size !== forwards.length) throw new Error(tr('Yerel yönlendirme portları benzersiz olmalıdır.'));
   return { id: input.id || crypto.randomUUID(), name: input.name.trim(), host: input.host.trim(), port,
     username: input.username.trim(), auth: input.auth === 'key' ? 'key' : 'password',
     privateKeyPath: String(input.privateKeyPath || ''), group: String(input.group || ''),
-    initialDirectory: String(input.initialDirectory || ''), color: /^#[a-f0-9]{6}$/i.test(input.color) ? input.color : '#8b9cff' };
+    initialDirectory: String(input.initialDirectory || ''), color: /^#[a-f0-9]{6}$/i.test(input.color) ? input.color : '#8b9cff', forwards };
 }
 function safeName(name) {
   if (typeof name !== 'string' || !name || name === '.' || name === '..' || /[\\/\x00-\x1f<>:"|?*]/.test(name) || /[. ]$/.test(name) || /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\.|$)/i.test(name)) throw new Error(tr('Dosya adı Windows ile uyumlu değil: ') + name);

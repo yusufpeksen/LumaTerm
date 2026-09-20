@@ -1,6 +1,7 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs/promises');
 const path=require('node:path');
+const net=require('node:net');
 const {Sessions}=require('../src/sessions.cjs');
 const {Files}=require('../src/files.cjs');
 const {fixture}=require('./ssh-fixture.cjs');
@@ -20,9 +21,12 @@ module.exports=async({app,win,sessions,files,store})=>{
   await until(()=>win.webContents.executeJavaScript('document.getElementById("modal").open'),'settings');
   assert.equal(await win.webContents.executeJavaScript('document.querySelector("select[name=promptTheme]").options.length'),4);
   assert.equal(await win.webContents.executeJavaScript('document.querySelector("input[name=promptGit]").checked'),true);
+  assert.ok(await win.webContents.executeJavaScript('document.querySelectorAll(".settings-nav button").length >= 4'));
   await sleep(300);
   await fs.writeFile(path.join(base,'settings.png'),(await win.webContents.capturePage()).toPNG());
   console.log('Settings captured');
+  await win.webContents.executeJavaScript('document.getElementById("modal").close(); document.getElementById("add-connection").click()');
+  await until(()=>win.webContents.executeJavaScript('Boolean(document.querySelector("textarea[name=forwards]"))'),'port forwarding profile control');
   await win.webContents.executeJavaScript('document.getElementById("modal").close(); document.getElementById("new-terminal").click()');
   await until(()=>win.webContents.executeJavaScript('document.querySelectorAll(".tab").length === 1'),'PowerShell tab');
   const local=[...sessions.items.values()].find(s=>s.kind==='local');assert.ok(local?.pty);
@@ -41,6 +45,8 @@ module.exports=async({app,win,sessions,files,store})=>{
   await fs.writeFile(path.join(remoteRoot,'.hidden'),'hidden');await fs.writeFile(path.join(remoteRoot,'hello.txt'),'hello SSH');
   await fs.writeFile(path.join(uploads,'Türkçe dosya.txt'),'round trip ✓ '.repeat(10000));
   const fixtureServer=await fixture(remoteRoot);let checks=0,sshEvents=[];
+  const echoServer=net.createServer(socket=>socket.pipe(socket));await new Promise(resolve=>echoServer.listen(0,'127.0.0.1',resolve));
+  const portProbe=net.createServer();await new Promise(resolve=>portProbe.listen(0,'127.0.0.1',resolve));const forwardPort=portProbe.address().port;await new Promise(resolve=>portProbe.close(resolve));
   const testSessions=new Sessions(store,e=>sshEvents.push(e),async()=>{checks++;return true;});const testFiles=new Files(testSessions,()=>{},async()=>true);
   try {
     store.saveProfile({name:'Test SSH',host:'127.0.0.1',port:fixtureServer.port,username:'tester',password:'fixture-secret'});
@@ -57,6 +63,9 @@ module.exports=async({app,win,sessions,files,store})=>{
     const keyPath=path.join(fixtureRoot,'id_rsa');await fs.writeFile(keyPath,fixtureServer.userKey);
     store.saveProfile({name:'Key SSH',host:'127.0.0.1',port:fixtureServer.port,username:'tester',auth:'key',privateKeyPath:keyPath});
     const keySession=await testSessions.open({kind:'ssh',profileId:store.data.profiles.at(-1).id});assert.equal(keySession.kind,'ssh');testSessions.close(keySession.id);
+    store.saveProfile({name:'Tunnel SSH',host:'127.0.0.1',port:fixtureServer.port,username:'tester',password:'fixture-secret',forwards:`${forwardPort}:127.0.0.1:${echoServer.address().port}`});
+    const tunnel=await testSessions.open({kind:'ssh',profileId:store.data.profiles.at(-1).id});assert.equal(tunnel.forwards.length,1);
+    const tunneled=await new Promise((resolve,reject)=>{const socket=net.connect(forwardPort,'127.0.0.1',()=>socket.write('LUMA_TUNNEL_OK'));let value='';socket.on('data',data=>{value+=data;if(value.includes('LUMA_TUNNEL_OK')){socket.end();resolve(value);}});socket.on('error',reject);setTimeout(()=>{socket.destroy();reject(new Error('Tunnel timeout'));},5000).unref();});assert.match(tunneled,/LUMA_TUNNEL_OK/);testSessions.close(tunnel.id);
     await fs.mkdir(path.join(uploads,'folder'));await fs.writeFile(path.join(uploads,'folder','child.txt'),'recursive copy');
     await testFiles.upload(a.id,[path.join(uploads,'folder')],'/');await testFiles.download(a.id,['/folder'],downloads);assert.equal(await fs.readFile(path.join(downloads,'folder','child.txt'),'utf8'),'recursive copy');
     store.data.hosts['127.0.0.1:'+fixtureServer.port]='SHA256:changed';store.write();await assert.rejects(()=>testSessions.open({kind:'ssh',profileId:p.id}));assert.equal(checks,1);
@@ -74,7 +83,7 @@ module.exports=async({app,win,sessions,files,store})=>{
     await fs.writeFile(path.join(base,'ssh.png'),(await win.webContents.capturePage()).toPNG());
     await require('./performance-suggestions.cjs').remote({win,sessions,id:rendererSSH.id,base,root:remoteRoot,fixture:fixtureServer,files});
     assert.deepEqual(errors,[]);
-    await fs.writeFile(path.join(base,'smoke.json'),JSON.stringify({passed:true,checks:['renderer startup','settings UI','real Electron ConPTY PowerShell','multiple sessions and split view','Windows DPAPI encrypted storage','SSH password and key authentication','incorrect password rejection','SSH terminal round trip','hidden remote files','SFTP upload/download binary equality','recursive folder transfer','native drag staging','mkdir/rename/delete','known host reuse','changed host rejection','renderer SSH + SFTP integration'],rendererErrors:errors},null,2));
-    console.log('SMOKE PASS: renderer, ConPTY, DPAPI, SSH, host verification, SFTP and split sessions');
-  }finally{testSessions.closeAll();sessions.closeAll();fixtureServer.close();await sleep(700);console.log('Cleanup complete');}
+    await fs.writeFile(path.join(base,'smoke.json'),JSON.stringify({passed:true,checks:['renderer startup','settings UI','real Electron ConPTY PowerShell','multiple sessions and split view','Windows DPAPI encrypted storage','SSH password and key authentication','SSH local port forwarding','incorrect password rejection','SSH terminal round trip','hidden remote files','SFTP upload/download binary equality','recursive folder transfer','native drag staging','mkdir/rename/delete','known host reuse','changed host rejection','renderer SSH + SFTP integration'],rendererErrors:errors},null,2));
+    console.log('SMOKE PASS: renderer, ConPTY, DPAPI, SSH tunnels, host verification, SFTP and split sessions');
+  }finally{testSessions.closeAll();sessions.closeAll();fixtureServer.close();echoServer.close();await sleep(700);console.log('Cleanup complete');}
 };

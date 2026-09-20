@@ -4,6 +4,7 @@ const pty = require('node-pty');
 const fs = require('node:fs');
 const os = require('node:os');
 const crypto = require('node:crypto');
+const net = require('node:net');
 const { CwdParser, quoteShell } = require('./core.cjs');
 const { localShell, remoteShellCommand } = require('./shell-integration.cjs');
 const { OutputFlow } = require('./output-flow.cjs');
@@ -22,7 +23,7 @@ class Sessions {
       s.cwd = cwd; this.emit({ type: 'cwd', id, cwd });
     });
     const data = chunk => { if(s.closed)return;const value = chunk.toString(); parser.push(value); if(s.output)s.output.push(value);else this.emit({ type: 'data', id, data: value }); };
-    const ended = message => { if (s.closed) return; s.ready = false;s.output?.flush(); this.emit({ type: 'exit', id, message }); };
+    const ended = message => { if (s.closed) return; s.ready = false;s.output?.flush();for(const item of s.forwards||[])try{item.server.close();}catch{}s.forwards=[]; this.emit({ type: 'exit', id, message }); };
     try {
       if (spec.kind !== 'ssh') {
         s.kind = 'local';
@@ -68,12 +69,37 @@ class Sessions {
         s.sftp = await new Promise((resolve, reject) => s.client.sftp((e, channel) => e ? reject(e) : resolve(channel)));
         s.cwd = await this.call(s, 'realpath', p.initialDirectory || '.');
       } catch(e) { this.emit({ type: 'notice', message: tr('Terminal açık; SFTP kullanılamıyor: ') + e.message }); s.cwd = '/'; }
+      s.forwards = [];
+      for (const forward of p.forwards || []) {
+        try { await this.startForward(s, forward); }
+        catch (e) { this.emit({ type: 'notice', message: tr('Port yönlendirme başlatılamadı: ') + forward.localPort + ' · ' + e.message }); }
+      }
       s.ready = true;
       if (p.initialDirectory) s.stream.write('cd -- ' + quoteShell(p.initialDirectory) + '\r');
-      return { id, kind: 'ssh', title: p.name, cwd: s.cwd, spec: { kind: 'ssh', profileId: p.id }, color: p.color, sftp: !!s.sftp };
+      return { id, kind: 'ssh', title: p.name, cwd: s.cwd, spec: { kind: 'ssh', profileId: p.id }, color: p.color, sftp: !!s.sftp, forwards: s.forwards.map(item=>item.config) };
     } catch(e) { this.close(id); throw e; }
   }
   call(s, method, ...args) { if (!s.sftp) return Promise.reject(new Error(tr('SFTP kullanılamıyor.'))); return new Promise((resolve,reject) => s.sftp[method](...args, (e, value) => e ? reject(e) : resolve(value))); }
+  startForward(s, config) {
+    return new Promise((resolve, reject) => {
+      const server = net.createServer(socket => {
+        try {
+          s.client.forwardOut(socket.remoteAddress || '127.0.0.1', socket.remotePort || 0, config.host, config.port, (error, stream) => {
+            if (error) { socket.destroy(error); return; }
+            socket.pipe(stream).pipe(socket);
+            stream.on('error', () => socket.destroy()); socket.on('error', () => stream.destroy());
+          });
+        } catch (error) { socket.destroy(error); }
+      });
+      const failed = error => { server.close(); reject(error); };
+      server.once('error', failed);
+      server.listen(config.localPort, '127.0.0.1', () => {
+        server.off('error', failed);
+        server.on('error', error => this.emit({ type: 'notice', message: tr('Port yönlendirme başlatılamadı: ') + config.localPort + ' · ' + error.message }));
+        const item = { server, config: { ...config } }; s.forwards.push(item); resolve(item);
+      });
+    });
+  }
   input(id, data) { const s = this.get(id); if (s.ready && typeof data === 'string') (s.pty || s.stream).write(data); }
   attach(id){this.get(id).output?.attach();}
   acknowledge(id,count){this.items.get(id)?.output?.acknowledge(count);}
@@ -83,7 +109,7 @@ class Sessions {
     // Opt-in shell hook. Does not modify the remote shell's configuration files.
     this.input(id, remoteShellCommand(this.store.data.settings));
   }
-  close(id) { const s = this.items.get(id); if(!s) return; s.closed = true;s.output?.close(); try { s.pty?.kill(); s.client?.end(); } catch {} this.items.delete(id); }
+  close(id) { const s = this.items.get(id); if(!s) return; s.closed = true;s.output?.close(); for(const item of s.forwards||[])try{item.server.close();}catch{} try { s.pty?.kill(); s.client?.end(); } catch {} this.items.delete(id); }
   closeAll() { for (const id of this.items.keys()) this.close(id); }
 }
 module.exports = { Sessions };

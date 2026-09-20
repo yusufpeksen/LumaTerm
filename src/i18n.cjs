@@ -10,6 +10,7 @@ const EN = {
   'Alt ↑/↓ seç · Ctrl → ekle · Esc kapat': 'Alt ↑/↓ select · Ctrl → insert · Esc dismiss',
   'Ctrl+Space önerileri açar, Ctrl+→ seçileni ekler. Tab kabuğun tamamlamasını kullanır. Geçmiş yalnızca bu oturumda tutulur.': 'Ctrl+Space opens suggestions; Ctrl+→ inserts the selected item. Tab uses native shell completion. History is kept only for this session.',
   'Dosyaları buraya bırak · indirmek için dosyadaki ↓ düğmesini kullan': 'Drop files here · use the file’s ↓ button to download',
+  'Dosyaları filtrele…': 'Filter files…', 'Dosyaları filtrele': 'Filter files',
   'Her bağlantı. Tek çalışma alanı.': 'Every connection. One workspace.',
   'Küçült': 'Minimize', 'Büyüt': 'Maximize', 'Kapat': 'Close',
   'ÇALIŞMA ALANI': 'WORKSPACE', 'ÇALIŞMA ALANLARI': 'WORKSPACES',
@@ -60,12 +61,20 @@ const EN = {
   'Parola / anahtar şifresi (boş bırak: koru)': 'Password / key passphrase (blank: keep saved)',
   'Parola / anahtar şifresi': 'Password / key passphrase', 'Grup etiketi': 'Group label',
   'Bağlantı rengi': 'Connection color', 'Başlangıç dizini (isteğe bağlı)': 'Initial directory (optional)',
+  'Yerel port yönlendirme': 'Local port forwarding',
+  'Her satıra localPort:host:port yaz. Yalnızca 127.0.0.1 üzerinde dinlenir.': 'Enter localPort:host:port on each line. Listens on 127.0.0.1 only.',
+  'Port yönlendirme biçimi geçersiz. Her satır localPort:host:port olmalıdır.': 'Invalid port forwarding format. Each line must use localPort:host:port.',
+  'Port yönlendirme adresi veya portu geçersiz.': 'A port forwarding host or port is invalid.',
+  'Yerel yönlendirme portları benzersiz olmalıdır.': 'Local forwarding ports must be unique.',
+  'Port yönlendirme etkin: ': 'Port forwarding active: ',
+  'Port yönlendirme başlatılamadı: ': 'Could not start port forwarding: ',
   'Parolayı bu Windows hesabında şifreli sakla': 'Encrypt and save credentials for this Windows account',
   'Parolalar Windows DPAPI ile korunur. İlk bağlantıda sunucunun kimliğini onaylaman istenir. Anahtarla bağlantıda parola alanı anahtarın şifresidir.': 'Credentials are protected with Windows DPAPI. You will verify the server identity on first connection. For key authentication, the password field is the key passphrase.',
   'Sil': 'Delete', 'Bağlantıyı kaydet': 'Save connection', 'Bağlantı kaydedildi.': 'Connection saved.',
   'Bağlantı silinsin mi?': 'Delete connection?', 'Sana göre bir terminal': 'Make it your terminal',
   'Görünüm, davranış ve bağlantı tercihleri.': 'Appearance, behavior and connection preferences.',
   'GÖRÜNÜM': 'APPEARANCE', 'Dil / Language': 'Language / Dil',
+  'GÜVENLİK': 'SECURITY', 'Ayar bölümleri': 'Settings sections',
   'Tema': 'Theme', 'Gece': 'Midnight', 'Aydınlık': 'Light', 'Orman': 'Forest',
   'KOMUT SATIRI': 'PROMPT', 'Komut satırı teması': 'Prompt theme', 'Okyanus': 'Ocean',
   'Gün batımı': 'Sunset', 'Tek renk': 'Monochrome', 'Bilgiler': 'Details',
@@ -132,9 +141,9 @@ const EN = {
   'Açık oturumlar ve devam eden aktarımlar kapanacak.': 'Open sessions and active transfers will be closed.',
   'LumaTerm başlatılamadı': 'LumaTerm could not start'
 };
-let language = 'tr';
+let language = 'en';
 const pattern = new RegExp(Object.keys(EN).sort((a,b)=>b.length-a.length).map(s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|'), 'g');
-function setLanguage(value) { language = value === 'en' ? 'en' : 'tr'; }
+function setLanguage(value) { language = value === 'tr' ? 'tr' : 'en'; }
 function getLanguage() { return language; }
 function tr(source) { return language === 'en' ? String(source).replace(pattern, match=>EN[match]) : String(source); }
 function msg(parts, ...values) { return parts.map((part,i)=>tr(part)+(i<values.length?values[i]:'')).join(''); }

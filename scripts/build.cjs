@@ -7,4 +7,4 @@ fs.copyFileSync('src/index.html','dist/index.html');
 fs.copyFileSync('src/styles.css','dist/styles.css');
 fs.copyFileSync('src/features.css','dist/features.css');
 fs.copyFileSync('node_modules/@xterm/xterm/css/xterm.css','dist/xterm.css');
-console.log('LumaTerm arayüzü derlendi.');
+console.log('LumaTerm renderer built.');
