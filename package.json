@@ -1,0 +1,40 @@
+{
+  "name": "lumaterm",
+  "version": "0.3.0",
+  "description": "Windows terminal and SSH workspace",
+  "author": "LumaTerm contributors",
+  "license": "MIT",
+  "private": true,
+  "homepage": "https://github.com/yusufpeksen/LumaTerm",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yusufpeksen/LumaTerm.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yusufpeksen/LumaTerm/issues"
+  },
+  "main": "src/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "build": "node scripts/build.cjs",
+    "test": "node --test tests/*.test.cjs",
+    "smoke": "electron . --smoke-test",
+    "package": "npm run build && node scripts/installer.cjs",
+    "release": "npm run build && node scripts/installer.cjs --publish"
+  },
+  "dependencies": {
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/addon-search": "^0.16.0",
+    "@xterm/xterm": "^6.0.0",
+    "electron-updater": "^6.8.9",
+    "lucide": "^0.577.0",
+    "node-pty": "^1.1.0",
+    "ssh2": "^1.17.0"
+  },
+  "devDependencies": {
+    "acorn": "^8.18.0",
+    "electron": "44.4.3",
+    "electron-builder": "^26.15.3",
+    "esbuild": "^0.28.1"
+  }
+}

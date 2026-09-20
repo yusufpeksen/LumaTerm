@@ -1,0 +1,12 @@
+const { contextBridge, ipcRenderer, webUtils } = require('electron');
+const channels = ['state','settings','host-forget','profile-save','profile-delete','pick-key','session-open','session-close','files-list','files-upload','files-download','files-mkdir','files-rename','files-delete','files-drag','pick-upload','pick-directory','workspace-save','workspace-delete','export-config','import-config','terminal-save','window-action','clipboard-read','clipboard-write','cwd-enable'];
+const api = {};
+for (const c of channels) api[c.replace(/-([a-z])/g, (_, x) => x.toUpperCase())] = (...args) => ipcRenderer.invoke(c, ...args);
+api.input = (id, data) => ipcRenderer.send('terminal-input', id, data);
+api.ready = id => ipcRenderer.send('terminal-ready', id);
+api.ack = (id,count) => ipcRenderer.send('terminal-ack',id,count);
+api.resize = (id, cols, rows) => ipcRenderer.send('terminal-resize', id, cols, rows);
+api.filePath = file => webUtils.getPathForFile(file);
+api.nativeDrag = token => ipcRenderer.send('native-drag', token);
+api.on = callback => { const listener = (_, event) => callback(event); ipcRenderer.on('event', listener); return () => ipcRenderer.removeListener('event', listener); };
+contextBridge.exposeInMainWorld('luma', api);
