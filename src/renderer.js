@@ -148,6 +148,10 @@ async function settingsModal(){
   const languageField=document.createElement('div');languageField.className='field wide';
   languageField.innerHTML=selectField(tr('Dil / Language'),'language',s.language,[['tr','Türkçe'],['en','English']]);
   $('settings-form').querySelector('.form-grid').prepend(languageField);
+  const promptSettings=document.createElement('div');promptSettings.className='form-grid prompt-settings';
+  promptSettings.innerHTML=`<div class="form-section">${esc(tr('KOMUT SATIRI'))}</div>${selectField(tr('Komut satırı teması'),'promptTheme',s.promptTheme,[['accent',tr('Vurgu rengi')],['ocean',tr('Okyanus')],['sunset',tr('Gün batımı')],['mono',tr('Tek renk')]])}<div class="field">${esc(tr('Bilgiler'))}<label class="check-field"><input type="checkbox" name="promptGit" ${s.promptGit?'checked':''}>${esc(tr('Git dalı ve değişiklik durumu'))}</label><label class="check-field"><input type="checkbox" name="promptIcons" ${s.promptIcons?'checked':''}>${esc(tr('Komut satırı simgeleri'))}</label></div>`;
+  $('settings-form').append(promptSettings);
+  const promptNote=document.createElement('div');promptNote.className='info-box';promptNote.textContent=tr('Yeni ayarlar yeni açılan terminal ve SSH dizin takibi oturumlarında uygulanır. Git bilgisi dalı, değişiklik sayısını ve uzak dalın ileri/geri durumunu gösterir.');$('settings-form').append(promptNote);
   const suggestionSetting=document.createElement('label');suggestionSetting.className='check-field';
   suggestionSetting.innerHTML=`<input type="checkbox" name="suggestions" ${s.suggestions?'checked':''}>${esc(tr('Otomatik komut önerileri'))}`;
   $('settings-form').append(suggestionSetting);
@@ -155,7 +159,7 @@ async function settingsModal(){
   $('settings-form').onsubmit=e=>{e.preventDefault();$('settings-submit').click();};
   const trusted=document.createElement('div');trusted.className='info-box';trusted.innerHTML=tr('<strong>Güvenilen sunucular</strong>')+(state.trustedHosts?.length?state.trustedHosts.map((h,i)=>msg`<div style="margin-top:10px;overflow-wrap:anywhere">${esc(h.host)}<br><small>${esc(h.fingerprint)}</small> <button class="text-button danger" data-forget-host="${i}" type="button">Unut</button></div>`).join(''):tr('<div>Henüz doğrulanmış SSH sunucusu yok.</div>'));$('settings-form').append(trusted);
   trusted.querySelectorAll('[data-forget-host]').forEach(b=>b.onclick=run(async()=>{Object.assign(state,await api.hostForget(state.trustedHosts[Number(b.dataset.forgetHost)].host));$('modal').close();settingsModal();}));
-  on('settings-submit',async()=>{const form=$('settings-form'),data=Object.fromEntries(new FormData(form));const shortcuts={};for(const key of Object.keys(s.shortcuts)){shortcuts[key]=data['shortcut-'+key];delete data['shortcut-'+key];}for(const k of ['cursorBlink','copyOnSelect','confirmClose','showHidden','terminalBell','suggestions'])data[k]=form.elements[k].checked;Object.assign(state,await api.settings({...data,shortcuts}));applySettings();$('modal').close();toast(tr('Ayarlar uygulandı.'));updateSessionInfo();});
+  on('settings-submit',async()=>{const form=$('settings-form'),data=Object.fromEntries(new FormData(form));const shortcuts={};for(const key of Object.keys(s.shortcuts)){shortcuts[key]=data['shortcut-'+key];delete data['shortcut-'+key];}for(const k of ['cursorBlink','copyOnSelect','confirmClose','showHidden','terminalBell','suggestions','promptGit','promptIcons'])data[k]=form.elements[k].checked;Object.assign(state,await api.settings({...data,shortcuts}));applySettings();$('modal').close();toast(tr('Ayarlar uygulandı.'));updateSessionInfo();});
   on('settings-export',async()=>{await api.exportConfig();toast(tr('Dışa aktarılan ayarlara parolalar dahil edilmez.'));});
   on('settings-import',async()=>{Object.assign(state,await api.importConfig());applySettings();sidebar();$('modal').close();});
 }

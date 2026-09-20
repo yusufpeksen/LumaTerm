@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const crypto = require('node:crypto');
 const { CwdParser, quoteShell } = require('./core.cjs');
-const { localShell } = require('./shell-integration.cjs');
+const { localShell, remoteShellCommand } = require('./shell-integration.cjs');
 const { OutputFlow } = require('./output-flow.cjs');
 class Sessions {
   constructor(store, emit, verify) { this.store = store; this.emit = emit; this.verify = verify; this.items = new Map(); }
@@ -28,7 +28,7 @@ class Sessions {
         s.kind = 'local';
         const executable = spec.shell || this.store.data.settings.defaultShell;
         const cwd = spec.cwd || this.store.data.settings.startDirectory || os.homedir();
-        const shell = localShell(executable, { ...process.env, TERM: 'xterm-256color', COLORTERM: 'truecolor' });
+        const shell = localShell(executable, { ...process.env, TERM: 'xterm-256color', COLORTERM: 'truecolor' }, this.store.data.settings);
         s.pty = pty.spawn(executable, shell.args, { name: 'xterm-256color', cols: 100, rows: 30, cwd, env: shell.env, useConpty: true, useConptyDll: true });
         s.pty.onData(data); s.pty.onExit(({ exitCode }) => ended(tr('İşlem sonlandı · kod ') + exitCode));
         s.ready = true; s.cwd = cwd;
@@ -81,7 +81,7 @@ class Sessions {
   integration(id) {
     const s = this.get(id); if(s.kind !== 'ssh') return;
     // Opt-in shell hook. Does not modify the remote shell's configuration files.
-    this.input(id, "if [ -n \"$BASH_VERSION\" ]; then __luma_cwd(){ printf '\\033]7;file://localhost%s\\007' \"$PWD\"; }; PROMPT_COMMAND=\"__luma_cwd${PROMPT_COMMAND:+; $PROMPT_COMMAND}\"; elif [ -n \"$ZSH_VERSION\" ]; then __luma_cwd(){ printf '\\033]7;file://localhost%s\\007' \"$PWD\"; }; precmd_functions+=(__luma_cwd); fi\r");
+    this.input(id, remoteShellCommand(this.store.data.settings));
   }
   close(id) { const s = this.items.get(id); if(!s) return; s.closed = true;s.output?.close(); try { s.pty?.kill(); s.client?.end(); } catch {} this.items.delete(id); }
   closeAll() { for (const id of this.items.keys()) this.close(id); }

@@ -6,6 +6,7 @@ const DEFAULTS = {
   lineHeight: 1.2, cursorStyle: 'bar', cursorBlink: true, scrollback: 10000,
   defaultShell: 'powershell.exe', startDirectory: '', copyOnSelect: false, confirmClose: true,
   showHidden: true, keepaliveInterval: 15000, terminalBell: false, suggestions: true,
+  promptTheme: 'accent', promptGit: true, promptIcons: true,
   shortcuts: { newTab: 'Ctrl+Shift+T', closeTab: 'Ctrl+Shift+W', settings: 'Ctrl+,', search: 'Ctrl+Shift+F', palette: 'Ctrl+Shift+P' }
 };
 function settings(input = {}) {
@@ -14,6 +15,7 @@ function settings(input = {}) {
     out[k] = Math.min(max, Math.max(min, Number(out[k]) || DEFAULTS[k]));
   }
   if (!['midnight','light','forest'].includes(out.theme)) out.theme = 'midnight';
+  if (!['accent','ocean','sunset','mono'].includes(out.promptTheme)) out.promptTheme = 'accent';
   if (!['tr','en'].includes(out.language)) out.language = 'tr';
   if (!/^#[a-f0-9]{6}$/i.test(out.accent)) out.accent = DEFAULTS.accent;
   if (!['bar','block','underline'].includes(out.cursorStyle)) out.cursorStyle = 'bar';

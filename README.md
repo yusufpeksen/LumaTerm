@@ -1,6 +1,6 @@
 # LumaTerm
 
-Windows için Türkçe ve İngilizce arayüzlü, açık kaynak terminal, SSH ve SFTP çalışma alanı. Bu sürüm **0.3 önizlemedir**; çalışan bir masaüstü uygulamasıdır. Windows Terminal'in tüm özellikleriyle birebir eşdeğer olduğu iddia edilmez.
+Windows için Türkçe ve İngilizce arayüzlü, açık kaynak terminal, SSH ve SFTP çalışma alanı. Bu sürüm **0.4 önizlemedir**; çalışan bir masaüstü uygulamasıdır. Windows Terminal'in tüm özellikleriyle birebir eşdeğer olduğu iddia edilmez.
 
 ## Kurulum ve güncellemeler
 
@@ -8,7 +8,7 @@ Windows için Türkçe ve İngilizce arayüzlü, açık kaynak terminal, SSH ve 
 
 Kurulu uygulama açılıştan kısa süre sonra ve ardından dört saatte bir GitHub Releases üzerinde yeni sürüm denetimi yapar. Yeni paket arka planda indirilir; hazır olduğunda uygulama yeniden başlatma izni ister. Güncelleme aynı LumaTerm kurulumu üzerine uygulanır ve `%APPDATA%/lumaterm` altındaki ayarlar ile SSH profilleri korunur.
 
-0.3 sürümünde SSH yazım akışı gecikmeyi azaltacak biçimde düzenlendi; terminal çıktısı kayıpsız olarak gruplanır ve arayüzün işleyebildiği hızda ilerler. Dosya gezgini artık aktif bağlama göre yalnızca yerel veya uzak dosyaları gösterir. Büyük klasörler sanal listeyle çizilir. PowerShell, CMD, POSIX kabukları ve yaygın araçlar için güvenli komut önerileri eklendi; öneriler komutu kendiliğinden çalıştırmaz ve parola girişlerinde kapatılır. Kabuk ve dosya simgeleri de yenilendi.
+0.4 sürümünde PowerShell komut satırı renkli ve iki satırlı bir görünüme kavuştu. Güncel klasörü, Git dalını, değişiklik sayısını ve upstream dalına göre ileri/geri durumunu gösterir. Ayarlar'dan Vurgu, Okyanus, Gün batımı veya Tek renk teması seçilebilir; Git bilgisi ve simgeler ayrı ayrı kapatılabilir. CMD renkli klasör ve simge görünümünü, SSH Bash/Zsh oturumları ise dizin takibi etkinleştirildiğinde tema ile Git bilgisini kullanır. Entegrasyonlar yalnızca açık oturumda çalışır; kullanıcı profil dosyalarını değiştirmez.
 
 Windows 10 1809 veya üzeri / Windows 11 x64 gerekir. Windows PowerShell ve CMD kullanılabilir. PowerShell 7 (`pwsh.exe`) ve WSL (`wsl.exe`) kendi kurulumları varsa açılır. Yerel kabuklar gerçek ConPTY oturumlarıdır; PowerShell komutları, profilleri ve etkileşimli konsol uygulamaları kabuğun kendisinde çalışır.
 
@@ -19,15 +19,16 @@ Windows 10 1809 veya üzeri / Windows 11 x64 gerekir. Windows PowerShell ve CMD 
 - **Sunucu kimliği:** İlk bağlantıda SHA-256 parmak izini sunucu yöneticinle doğrula. Kaydedilen kimlik değişirse bağlantı reddedilir. Sunucu meşru biçimde yeniden kurulduysa Ayarlar → Güvenilen sunucular bölümünden eski kaydı unut ve yeni kimliği tekrar doğrula.
 - **Sekmeler:** Birden fazla yerel/uzak oturum birlikte açılır. Üstteki iki sütun simgesi iki oturumu yan yana gösterir. Yeniden bağlan simgesi yeni bir sekme açar; mevcut çıktıyı korur.
 - **Dosya paneli:** Yerel terminalde yalnızca bilgisayarındaki klasör, SSH oturumunda yalnızca uzak sunucudaki klasör gösterilir. Aktif sekme değişince panel de o oturumun güncel dizinine geçer. Klasörlere çift tıkla; adres alanına yol yazarak Enter'a bas. Gizli dosyalar varsayılan olarak görünür.
-- **Yerel dizin takibi:** PowerShell/PowerShell 7 ve CMD oturumlarında `cd`, `Set-Location`, `Push-Location` ve `Pop-Location` sonrası dosya paneli otomatik güncellenir. Sekmeler kendi dizinlerini korur; arka plandaki oturum aktif paneli değiştirmez. PowerShell profil dosyaları değiştirilmez; mevcut prompt oturumluk bir bildirim fonksiyonuyla sarılır. Sonradan prompt fonksiyonunu veya CMD `PROMPT` değişkenini tamamen değiştiren komutlar takibi kaldırabilir. WSL ve özel kabuklar için bu yerel entegrasyon uygulanmaz.
+- **Akıllı komut satırı:** PowerShell/PowerShell 7 güncel klasörü renkli gösterir. Bir Git deposunda dal adı, değişiklik sayısı, temiz durum ve upstream dalına göre `↑/↓` bilgisi eklenir. CMD güncel klasörü aynı temayla gösterir. Ayarlar → Komut satırı bölümünden tema, Git bilgisi ve simgeler değiştirilebilir; ayarlar yeni açılan oturumlara uygulanır.
+- **Yerel dizin takibi:** PowerShell/PowerShell 7 ve CMD oturumlarında `cd`, `Set-Location`, `Push-Location` ve `Pop-Location` sonrası dosya paneli otomatik güncellenir. Sekmeler kendi dizinlerini korur; arka plandaki oturum aktif paneli değiştirmez. Entegrasyon oturumluk kurulur ve PowerShell profil dosyalarını değiştirmez. Sonradan prompt fonksiyonunu veya CMD `PROMPT` değişkenini tamamen değiştiren komutlar takibi kaldırabilir. WSL ve özel kabuklar için bu yerel entegrasyon uygulanmaz.
 - **Yükleme:** Explorer'dan veya alt yerel panelden üst uzak panele dosya/klasör sürükle. Yükle ve klasör yükle düğmeleriyle dosya seçimi de yapabilirsin.
 - **İndirme:** Uzak dosyanın indirme düğmesine tıkla veya dosyaya çift tıkla; hedef klasörü Windows klasör seçicisinden belirle.
 - **Doğrudan Explorer'a sürükleme:** Uzak dosyanın üzerine gel, dışa taşıma simgesine tıkla. Önce yerel geçici kopya hazırlanır; açılan “Dosya hazır” penceresindeki dosya düğmesini Explorer'a veya masaüstüne sürükle. Windows'a mevcut bir yerel dosya vermek gerektiğinden bu iki aşamalıdır.
 - **Dosya işlemleri:** Klasör oluşturma, yeniden adlandırma ve silme bulunur. Silme kalıcıdır ve onay ister. Klasör silme yalnızca boş klasörlerde çalışır. Var olan dosyanın üzerine yazmadan önce sorulur.
-- **Dizin takibi:** SSH oturumu Bash/Zsh komut satırındayken `Dizini takip et` seçeneğini etkinleştir. Oturumluk bir prompt fonksiyonu OSC 7 mesajlarıyla dosya panelini terminalin dizinine taşır. Uzak ayar dosyaları değiştirilmez. Farklı kabuklarda panel yolunu elle değiştir; paneldeki terminal simgesi seçili klasöre `cd` gönderir.
+- **Dizin takibi:** SSH oturumu Bash/Zsh komut satırındayken `Dizini takip et` seçeneğini etkinleştir. Oturumluk prompt dosya panelini terminalin dizinine taşır ve seçili tema ile Git dalı/değişiklik bilgisini gösterir. Uzak ayar dosyaları değiştirilmez. Farklı kabuklarda panel yolunu elle değiştir; paneldeki terminal simgesi seçili klasöre `cd` gönderir.
 - **Çalışma Alanları:** Sol bölümdeki kaydet simgesi açık oturumları bir isim altında saklar. Sonraki açılışta gruba tıklamak bütün bağlantıları yeniden açar. Bu özellik terminal çıktılarını, çalışan süreçleri veya uzak `tmux` oturumlarını kaydetmez.
 - **Komut önerileri:** Yazarken oturum geçmişi, kabuk komutları, yaygın alt komutlar ve açık dosya listesinden öneriler gösterilir. `Ctrl+Space` listeyi açar, `Alt+↑/↓` seçimi değiştirir, `Ctrl+→` seçileni satıra ekler, `Esc` kapatır. `Tab` kabuğun kendi tamamlamasına bırakılmıştır. Geçmiş yalnızca açık oturumun belleğinde tutulur.
-- **Ayarlar:** Üç tema, vurgu rengi, yazı tipi/boyutu, satır aralığı, imleç, geçmiş uzunluğu, başlangıç klasörü, kabuk, kısayollar, komut önerileri, gizli dosyalar, SSH canlı tutma aralığı, seçerek kopyalama ve kapanış onayı.
+- **Ayarlar:** Üç uygulama teması, dört komut satırı teması, vurgu rengi, Git/simge seçenekleri, yazı tipi/boyutu, satır aralığı, imleç, geçmiş uzunluğu, başlangıç klasörü, kabuk, kısayollar, komut önerileri, gizli dosyalar, SSH canlı tutma aralığı, seçerek kopyalama ve kapanış onayı.
 - **Yedekleme:** Ayarları JSON olarak dışa/içe aktarabilirsin. Dışa aktarılan dosya parola içermez. İçe aktarma dış dosyadaki sunucu güven kayıtlarını kabul etmez.
 
 ## Varsayılan kısayollar
@@ -90,6 +91,6 @@ npm run package
 
 Gerçek sunucunun kimliği veya parolası sağlanmadığı için kişisel sunucunda bağlantı testi yapılmadı. Explorer'a bırakmanın son Windows fare hareketi otomatik test edilmedi; hazırlanan yerel dosyanın içeriği kontrol edildi. PowerShell 7/WSL ve farklı terminal programları ayrıca kendi kurulumlarında doğrulanmalıdır.
 
-0.3 regresyon testleri gerçek PowerShell ve CMD süreçlerinde dizin bildirimlerini, Türkçe/boşluk/yüzde/apostrof içeren yolları, göreli dizinleri, sekme geçişlerini, başarısız `cd` sonrasında doğru konumun korunmasını, dil geçişini, tek aktif dosya panelini, büyük uzak klasörlerin sanal çizimini, SSH giriş gecikmesini, PowerShell/CMD/SSH önerilerini, öneri kabulünü ve parola alanı gizliliğini kontrol eder. `node scripts/check-localization.cjs` uygulama metinlerinin çeviri kapsamını denetler.
+0.4 regresyon testleri gerçek PowerShell ve CMD süreçlerinde renkli prompt üretimini, Git durumunu, dizin bildirimlerini, Türkçe/boşluk/yüzde/apostrof içeren yolları, göreli dizinleri, sekme geçişlerini, başarısız `cd` sonrasında doğru konumun korunmasını, dil geçişini, tek aktif dosya panelini, büyük uzak klasörlerin sanal çizimini, SSH giriş gecikmesini, PowerShell/CMD/SSH önerilerini, öneri kabulünü ve parola alanı gizliliğini kontrol eder. `node scripts/check-localization.cjs` uygulama metinlerinin çeviri kapsamını denetler.
 
 Teknik kaynaklar: [Microsoft node-pty](https://github.com/microsoft/node-pty), [ssh2](https://github.com/mscdex/ssh2), [Electron güvenliği](https://www.electronjs.org/docs/latest/tutorial/security), [Electron safeStorage](https://www.electronjs.org/docs/latest/api/safe-storage), [xterm.js](https://xtermjs.org/).

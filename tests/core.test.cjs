@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { settings, profile, childPath, quoteShell, CwdParser } = require('../src/core.cjs');
 const { Store } = require('../src/store.cjs');
-test('settings clamp untrusted numeric values and validate theme',()=>{const s=settings({fontSize:1000,scrollback:-5,theme:'bad',accent:'url(x)'});assert.equal(s.fontSize,32);assert.equal(s.scrollback,100);assert.equal(s.theme,'midnight');assert.equal(s.accent,'#8b9cff');assert.equal(s.shortcuts.newTab,'Ctrl+Shift+T');});
+test('settings clamp untrusted numeric values and validate themes',()=>{const s=settings({fontSize:1000,scrollback:-5,theme:'bad',promptTheme:'bad',accent:'url(x)'});assert.equal(s.fontSize,32);assert.equal(s.scrollback,100);assert.equal(s.theme,'midnight');assert.equal(s.promptTheme,'accent');assert.equal(s.accent,'#8b9cff');assert.equal(s.shortcuts.newTab,'Ctrl+Shift+T');assert.equal(s.promptGit,true);assert.equal(s.promptIcons,true);});
 test('SSH profiles require credentials and valid ports',()=>{assert.throws(()=>profile({name:'x',host:'host',username:'user',port:65536}));assert.throws(()=>profile({name:'x',host:'host'}));assert.equal(profile({name:' x ',host:' h ',username:' u '}).host,'h');});
 test('untrusted remote file names cannot escape download directory',()=>{for(const n of ['..','../secret','a/b','a\\b','C:foo','CON','NUL.txt','foo.','foo ','\u0000'])assert.throws(()=>childPath('C:\\Downloads',n),n);assert.equal(childPath('C:\\Downloads','özel dosya.txt'),path.join('C:\\Downloads','özel dosya.txt'));});
 test('shell paths escape apostrophes',()=>{assert.equal(quoteShell("/home/a'b"),"'/home/a'\\''b'");});

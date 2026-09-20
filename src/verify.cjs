@@ -10,6 +10,7 @@ module.exports=async({app,win,sessions,store})=>{
   sessions.input(s.id,"Write-Output ('PACKAGE_' + 'PTY_OK')\r");
   for(let n=0;n<100&&!output.includes('PACKAGE_PTY_OK');n++)await sleep(100);
   assert.ok(output.includes('PACKAGE_PTY_OK'));
+  assert.match(output,/\x1b\[38;2;/);assert.ok(output.includes('◆')&&output.includes('❯'));
   const directory=path.resolve(app.getPath('userData'));
   sessions.input(s.id,"Set-Location -LiteralPath '"+directory.replace(/'/g,"''")+"'\r");
   for(let n=0;n<100&&sessions.get(s.id).cwd!==directory;n++)await sleep(100);
@@ -25,6 +26,6 @@ module.exports=async({app,win,sessions,store})=>{
   assert.equal(await win.webContents.executeJavaScript('document.documentElement.lang'),'en');
   assert.equal(store.decrypt(store.encrypt('test-value')),'test-value');
   sessions.closeAll();await sleep(700);
-  await fs.writeFile(path.join(app.getPath('userData'),'package-check.json'),JSON.stringify({passed:true,version:'0.3.0',checks:['packaged renderer','packaged ConPTY DLL','real PowerShell output','PowerShell directory tracking','single-context file explorers','command suggestions UI','welcome cards removed','English UI switch','DPAPI encryption']},null,2));
+  await fs.writeFile(path.join(app.getPath('userData'),'package-check.json'),JSON.stringify({passed:true,version:'0.4.0',checks:['packaged renderer','packaged ConPTY DLL','real PowerShell output','colored Git-aware prompt','PowerShell directory tracking','single-context file explorers','command suggestions UI','welcome cards removed','English UI switch','DPAPI encryption']},null,2));
   console.log('PACKAGE CHECK PASS');
 };

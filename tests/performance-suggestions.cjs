@@ -19,7 +19,7 @@ async function local({win,sessions,id,base}){
   assert.equal(await evaluate('document.getElementById("local-explorer").hidden'),false);
   await win.webContents.insertText('di');await until(()=>evaluate('document.querySelector(".suggestions:not([hidden]) .suggestion span")?.textContent === "dir"'),'CMD suggestions');
   win.webContents.sendInputEvent({type:'keyDown',keyCode:'Right',modifiers:['control']});win.webContents.sendInputEvent({type:'keyUp',keyCode:'Right',modifiers:['control']});
-  await until(()=>evaluate('document.querySelector(".terminal-pane.focused .xterm-rows").textContent.includes(">dir")'),'keyboard completion acceptance');
+  await until(()=>evaluate('document.querySelector(".terminal-pane.focused .xterm-rows").textContent.includes("❯ dir") || document.querySelector(".terminal-pane.focused .xterm-rows").textContent.includes("> dir")'),'keyboard completion acceptance');
   sessions.input(cmd.id,'\x03');
   await evaluate(`document.querySelector('.tab[data-id="${cmd.id}"] .tab-close').click()`);
   await until(()=>evaluate('document.getElementById("modal").open && Boolean(document.getElementById("ask-yes"))'),'CMD close confirmation');await evaluate('document.getElementById("ask-yes").click()');

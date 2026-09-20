@@ -18,6 +18,8 @@ module.exports=async({app,win,sessions,files,store})=>{
   console.log('Welcome captured');
   await win.webContents.executeJavaScript('document.getElementById("settings-button").click()');
   await until(()=>win.webContents.executeJavaScript('document.getElementById("modal").open'),'settings');
+  assert.equal(await win.webContents.executeJavaScript('document.querySelector("select[name=promptTheme]").options.length'),4);
+  assert.equal(await win.webContents.executeJavaScript('document.querySelector("input[name=promptGit]").checked'),true);
   await sleep(300);
   await fs.writeFile(path.join(base,'settings.png'),(await win.webContents.capturePage()).toPNG());
   console.log('Settings captured');
