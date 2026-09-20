@@ -1,19 +1,17 @@
 const path = require('node:path');
 const { build, Platform, Arch } = require('electron-builder');
 
-const slug = process.env.LUMATERM_GITHUB_REPOSITORY || process.env.GITHUB_REPOSITORY || '';
+const packageMetadata = require('../package.json');
+const repositoryUrl = typeof packageMetadata.repository === 'string' ? packageMetadata.repository : packageMetadata.repository?.url || '';
+const repositoryMatch = repositoryUrl.match(/github\.com[/:]([^/]+)\/([^/.]+)(?:\.git)?$/i);
+const slug = process.env.LUMATERM_GITHUB_REPOSITORY || process.env.GITHUB_REPOSITORY || (repositoryMatch ? `${repositoryMatch[1]}/${repositoryMatch[2]}` : '');
 const [owner, repo] = slug.split('/');
-const shouldPublish = process.argv.includes('--publish');
-
-if (shouldPublish && (!owner || !repo)) {
-  throw new Error('Publishing requires LUMATERM_GITHUB_REPOSITORY=owner/repository.');
-}
 
 const publish = owner && repo ? [{ provider: 'github', owner, repo, releaseType: 'release' }] : undefined;
 
 build({
   targets: Platform.WINDOWS.createTarget('nsis', Arch.x64),
-  publish: shouldPublish ? 'always' : 'never',
+  publish: 'never',
   config: {
     appId: 'com.lumaterm.desktop',
     productName: 'LumaTerm',

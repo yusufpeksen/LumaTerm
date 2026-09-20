@@ -36,8 +36,33 @@ jobs:
       - name: Test
         run: npm test
 
-      - name: Build and publish Setup.exe
-        run: npm run release
+      - name: Build Setup.exe
+        run: npm run package
+        env:
+          LUMATERM_GITHUB_REPOSITORY: ${{ github.repository }}
+
+      - name: Publish GitHub Release
+        shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          LUMATERM_GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          $version = node -p "require('./package.json').version"
+          $tag = '${{ github.ref_name }}'
+          $assets = @(
+            'release/LumaTerm-Setup.exe',
+            'release/LumaTerm-Setup.exe.blockmap',
+            'release/latest.yml'
+          )
+          foreach ($asset in $assets) {
+            if (-not (Test-Path -LiteralPath $asset)) {
+              throw "Missing release asset: $asset"
+            }
+          }
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag @assets --clobber
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          } else {
+            gh release create $tag @assets --verify-tag --title "LumaTerm $version" --generate-notes
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
