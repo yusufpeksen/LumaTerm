@@ -1,5 +1,5 @@
-import { createElement, Terminal, SquareTerminal, Command, Plus, Minus, Square, X, Search, Settings2, BookmarkPlus, Bookmark, Layers, FolderSync, Folder, FolderOpen, File, FileCode2, FileJson, FileText, FileImage, FileArchive, FolderUp, FolderPlus, Folders, Monitor, Upload, Download, ArrowUp, ArrowDown, CornerDownLeft, RefreshCw, RotateCw, Save, Eraser, Columns2, PanelRight, Server, ServerCog, MoreHorizontal, Pencil, Trash2, ExternalLink, KeyRound, ChevronRight, Sparkles, History, ChevronDown, ChevronsRight, Braces, Globe, HardDrive } from 'lucide';
-const nodes={Terminal,SquareTerminal,Command,Plus,Minus,Square,X,Search,Settings2,BookmarkPlus,Bookmark,Layers,FolderSync,Folder,FolderOpen,File,FileCode2,FileJson,FileText,FileImage,FileArchive,FolderUp,FolderPlus,Folders,Monitor,Upload,Download,ArrowUp,ArrowDown,CornerDownLeft,RefreshCw,RotateCw,Save,Eraser,Columns2,PanelRight,Server,ServerCog,MoreHorizontal,Pencil,Trash2,ExternalLink,KeyRound,ChevronRight,Sparkles,History,ChevronDown,ChevronsRight,Braces,Globe,HardDrive};
+import { createElement, Terminal, SquareTerminal, Command, Plus, Minus, Square, X, Search, Settings2, BookmarkPlus, Bookmark, Layers, FolderSync, Folder, FolderOpen, File, FileCode2, FileJson, FileText, FileImage, FileArchive, FilePenLine, FolderUp, FolderPlus, Folders, Monitor, Upload, Download, ArrowUp, ArrowDown, CornerDownLeft, RefreshCw, RotateCw, Save, Eraser, Columns2, PanelRight, PanelLeft, Server, ServerCog, MoreHorizontal, Pencil, Pin, PinOff, Trash2, ExternalLink, KeyRound, ChevronRight, Sparkles, History, ChevronDown, ChevronsRight, Braces, Globe, HardDrive } from 'lucide';
+const nodes={Terminal,SquareTerminal,Command,Plus,Minus,Square,X,Search,Settings2,BookmarkPlus,Bookmark,Layers,FolderSync,Folder,FolderOpen,File,FileCode2,FileJson,FileText,FileImage,FileArchive,FilePenLine,FolderUp,FolderPlus,Folders,Monitor,Upload,Download,ArrowUp,ArrowDown,CornerDownLeft,RefreshCw,RotateCw,Save,Eraser,Columns2,PanelRight,PanelLeft,Server,ServerCog,MoreHorizontal,Pencil,Pin,PinOff,Trash2,ExternalLink,KeyRound,ChevronRight,Sparkles,History,ChevronDown,ChevronsRight,Braces,Globe,HardDrive};
 const cache=new Map();
 export function icon(name){
   if(!cache.has(name)){
@@ -13,7 +13,7 @@ export function shellIcon(shell){const s=shell.toLowerCase();return s.includes('
 export function fileIcon(entry){
   if(entry.directory)return 'folder';
   const ext=entry.name.split('.').at(-1).toLowerCase();
-  if(['js','ts','jsx','tsx','py','ps1','sh','c','cpp','go','rs','html','css'].includes(ext))return 'file-code-2';
+  if(['js','ts','jsx','tsx','py','cs','csx','ps1','sh','c','h','cpp','hpp','go','rs','html','css'].includes(ext))return 'file-code-2';
   if(['json','yaml','yml','toml','xml','ini','conf'].includes(ext))return 'file-json';
   if(['png','jpg','jpeg','gif','webp','svg','ico'].includes(ext))return 'file-image';
   if(['zip','tar','gz','7z','rar','xz'].includes(ext))return 'file-archive';

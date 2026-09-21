@@ -38,7 +38,7 @@ module.exports=async({app,win,sessions,files,store})=>{
   await win.webContents.executeJavaScript('document.getElementById("split-button").click()');
   assert.equal(await win.webContents.executeJavaScript('document.querySelectorAll(".terminal-pane:not([hidden])").length'),2);
   await require('./directory-language.cjs')({win,sessions,store,base,firstId:local.id});
-  await require('./performance-suggestions.cjs').local({win,sessions,id:local.id,base});
+  await require('./performance.cjs').local({win,sessions,id:local.id,base});
   const fixtureRoot=await fs.mkdtemp(path.join(base,'fixture-'));
   const remoteRoot=path.join(fixtureRoot,'remote'),uploads=path.join(fixtureRoot,'uploads'),downloads=path.join(fixtureRoot,'downloads');
   for(const dir of [remoteRoot,uploads,downloads])await fs.mkdir(dir,{recursive:true});
@@ -81,7 +81,7 @@ module.exports=async({app,win,sessions,files,store})=>{
     assert.deepEqual(await fs.readFile(staged.local),await fs.readFile(path.join(uploads,'Türkçe dosya.txt')));
     await sleep(300);
     await fs.writeFile(path.join(base,'ssh.png'),(await win.webContents.capturePage()).toPNG());
-    await require('./performance-suggestions.cjs').remote({win,sessions,id:rendererSSH.id,base,root:remoteRoot,fixture:fixtureServer,files});
+    await require('./performance.cjs').remote({win,sessions,id:rendererSSH.id,base,root:remoteRoot,fixture:fixtureServer,files});
     assert.deepEqual(errors,[]);
     await fs.writeFile(path.join(base,'smoke.json'),JSON.stringify({passed:true,checks:['renderer startup','settings UI','real Electron ConPTY PowerShell','multiple sessions and split view','Windows DPAPI encrypted storage','SSH password and key authentication','SSH local port forwarding','incorrect password rejection','SSH terminal round trip','hidden remote files','SFTP upload/download binary equality','recursive folder transfer','native drag staging','mkdir/rename/delete','known host reuse','changed host rejection','renderer SSH + SFTP integration'],rendererErrors:errors},null,2));
     console.log('SMOKE PASS: renderer, ConPTY, DPAPI, SSH tunnels, host verification, SFTP and split sessions');

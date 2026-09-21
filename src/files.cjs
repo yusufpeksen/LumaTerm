@@ -4,8 +4,8 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const { childPath, safeName } = require('./core.cjs');
 class Files {
-  constructor(sessions, emit, confirm) { this.sessions = sessions; this.emit = emit; this.confirm = confirm;this.progressTimes=new Map(); }
-  progress(transferId,name,done,total){const now=Date.now();if(done!==total&&now-(this.progressTimes.get(transferId)||0)<100)return;this.progressTimes.set(transferId,now);this.emit({type:'transfer',transferId,name,done,total});}
+  constructor(sessions, emit, confirm) { this.sessions = sessions; this.emit = emit; this.confirm = confirm;this.progressTimes=new Map();this.totals={download:0,upload:0};this.transferOffsets=new Map(); }
+  progress(transferId,name,done,total,direction){const key=transferId+':'+name,previous=this.transferOffsets.get(key)||0,next=Math.max(previous,done);this.totals[direction]+=next-previous;this.transferOffsets.set(key,next);const now=Date.now();if(done!==total&&now-(this.progressTimes.get(transferId)||0)<100)return;this.progressTimes.set(transferId,now);this.emit({type:'transfer',transferId,name,done:next,total,direction});}
   async list(id, dir) {
     if (!id) {
       const entries = await fs.readdir(dir, { withFileTypes: true });
@@ -29,11 +29,11 @@ class Files {
         for (const name of await fs.readdir(local)) await visit(path.join(local, name), path.posix.join(remote, name));
       } else {
         if (await this.exists(s,remote) && !await this.confirm(tr('Dosyanın üzerine yazılsın mı?'), remote)) return;
-        await this.sessions.call(s, 'fastPut', local, remote, { concurrency:8,step: (done, chunk, total) => this.progress(transferId,path.basename(local),done,total) }); count++;
+        await this.sessions.call(s, 'fastPut', local, remote, { concurrency:8,step: (done, chunk, total) => this.progress(transferId,remote,done,total,'upload') }); count++;
       }
     };
     try { for (const source of sources) await visit(source, path.posix.join(dest, path.basename(source))); return count; }
-    finally { this.progressTimes.delete(transferId);this.emit({ type: 'transfer-end', transferId }); }
+    finally { this.progressTimes.delete(transferId);for(const key of this.transferOffsets.keys())if(key.startsWith(transferId+':'))this.transferOffsets.delete(key);this.emit({ type: 'transfer-end', transferId }); }
   }
   async download(id, sources, dest, quiet = false) {
     const s = this.sessions.get(id); const transferId = crypto.randomUUID(); let count = 0;
@@ -53,13 +53,13 @@ class Files {
         if (exists && !quiet && !await this.confirm(tr('Dosyanın üzerine yazılsın mı?'), local)) return;
         const temporary = local + '.' + crypto.randomUUID() + '.part';
         try {
-          await this.sessions.call(s, 'fastGet', remote, temporary, { concurrency:8,step: (done, chunk, total) => this.progress(transferId,path.posix.basename(remote),done,total) });
+          await this.sessions.call(s, 'fastGet', remote, temporary, { concurrency:8,step: (done, chunk, total) => this.progress(transferId,remote,done,total,'download') });
           await fs.rename(temporary, local); count++;
         } catch(e) { await fs.rm(temporary, { force: true }).catch(()=>{}); throw e; }
       }
     };
     try { for(const remote of sources) await visit(remote, childPath(dest, path.posix.basename(remote))); return count; }
-    finally { this.progressTimes.delete(transferId);this.emit({ type: 'transfer-end', transferId }); }
+    finally { this.progressTimes.delete(transferId);for(const key of this.transferOffsets.keys())if(key.startsWith(transferId+':'))this.transferOffsets.delete(key);this.emit({ type: 'transfer-end', transferId }); }
   }
   async mutate(id, op, target, name) {
     const s = this.sessions.get(id);

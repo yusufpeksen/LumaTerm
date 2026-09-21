@@ -13,7 +13,7 @@ class Sessions {
   get(id) { const s = this.items.get(id); if (!s) throw new Error(tr('Oturum kapalı.')); return s; }
   async open(spec, managedOutput = false) {
     const id = crypto.randomUUID();
-    const s = { id, kind: spec.kind, spec, closed: false, ready: false };
+    const s = { id, kind: spec.kind, spec, closed: false, ready: false, openedAt: Date.now(), lastActivityAt: Date.now(), bytesIn: 0, bytesOut: 0 };
     this.items.set(id, s);
     if(managedOutput)s.output=new OutputFlow(value=>this.emit({type:'data',id,data:value}),()=>{s.pty?.pause();s.stream?.pause();s.stream?.stderr.pause();},()=>{s.pty?.resume();s.stream?.resume();s.stream?.stderr.resume();});
     const parser = new CwdParser(cwd => {
@@ -22,8 +22,8 @@ class Sessions {
       if (s.closed || s.cwd === cwd) return;
       s.cwd = cwd; this.emit({ type: 'cwd', id, cwd });
     });
-    const data = chunk => { if(s.closed)return;const value = chunk.toString(); parser.push(value); if(s.output)s.output.push(value);else this.emit({ type: 'data', id, data: value }); };
-    const ended = message => { if (s.closed) return; s.ready = false;s.output?.flush();for(const item of s.forwards||[])try{item.server.close();}catch{}s.forwards=[]; this.emit({ type: 'exit', id, message }); };
+    const data = chunk => { if(s.closed)return;const value = chunk.toString();s.bytesIn+=Buffer.byteLength(value);s.lastActivityAt=Date.now(); parser.push(value); if(s.output)s.output.push(value);else this.emit({ type: 'data', id, data: value }); };
+    const ended = message => { if (s.closed) return; s.ready = false;s.endedAt=Date.now();s.output?.flush();for(const item of s.forwards||[])try{item.server.close();}catch{}s.forwards=[]; this.emit({ type: 'exit', id, message }); };
     try {
       if (spec.kind !== 'ssh') {
         s.kind = 'local';
@@ -100,7 +100,8 @@ class Sessions {
       });
     });
   }
-  input(id, data) { const s = this.get(id); if (s.ready && typeof data === 'string') (s.pty || s.stream).write(data); }
+  input(id, data) { const s = this.get(id); if (s.ready && typeof data === 'string') {s.bytesOut+=Buffer.byteLength(data);s.lastActivityAt=Date.now();(s.pty || s.stream).write(data);} }
+  stats(id) {const s=this.items.get(id);return s?{openedAt:s.openedAt,endedAt:s.endedAt||null,lastActivityAt:s.lastActivityAt,bytesIn:s.bytesIn,bytesOut:s.bytesOut,connected:s.ready,kind:s.kind}:null;}
   attach(id){this.get(id).output?.attach();}
   acknowledge(id,count){this.items.get(id)?.output?.acknowledge(count);}
   resize(id, cols, rows) { const s = this.get(id); cols = Math.max(2, Math.min(500, Number(cols) || 80)); rows = Math.max(2, Math.min(300, Number(rows) || 24)); if(s.ready) s.pty ? s.pty.resize(cols, rows) : s.stream.setWindow(rows, cols, 0, 0); }

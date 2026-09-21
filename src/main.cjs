@@ -8,7 +8,8 @@ const { Store } = require('./store.cjs');
 const { settings, profile, safeName } = require('./core.cjs');
 const { Sessions } = require('./sessions.cjs');
 const { Files } = require('./files.cjs');
-let win, store, sessions, files, allowClose = false, updateTimer;
+const { Editor } = require('./editor.cjs');
+let win, store, sessions, files, editor, allowClose = false, updateTimer, offeredUpdate, previousCpu;
 const stagedFiles = new Map();
 const smoke = process.argv.includes('--smoke-test');
 const packageCheck = process.argv.includes('--verify-package');
@@ -19,11 +20,20 @@ app.setAppUserModelId('com.lumaterm.desktop');
 const page = path.join(__dirname,'../dist/index.html');
 function emit(event) { if(win && !win.isDestroyed()) win.webContents.send('event', event); }
 function startAutoUpdater() {
-  if(!app.isPackaged || smoke || packageCheck) return;
+  if(!app.isPackaged || smoke || packageCheck || app.getVersion().includes('-')) return;
   const { autoUpdater } = require('electron-updater');
-  autoUpdater.autoDownload = true;
+  autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = true;
   autoUpdater.on('error', error => console.error('Update check failed:',error.message));
+  autoUpdater.on('update-available', info => {
+    if(offeredUpdate===info.version)return;
+    offeredUpdate=info.version;
+    dialog.showMessageBox(win,{
+      type:'info',title:'LumaTerm',message:msg`${info.version} · Yeni LumaTerm sürümü hazır`,
+      detail:tr('Güncellemeyi şimdi indirmek ister misin? İndirme sırasında uygulamayı kullanabilirsin.'),
+      buttons:[tr('Sonra'),tr('İndir')],defaultId:1,cancelId:0,noLink:true
+    }).then(({response})=>{if(response===1)autoUpdater.downloadUpdate().catch(error=>console.error('Update download failed:',error.message));});
+  });
   autoUpdater.on('update-downloaded', info => {
     dialog.showMessageBox(win,{
       type:'info',
@@ -48,6 +58,13 @@ function trusted(event) { if(event.sender !== win.webContents || event.senderFra
 function handle(name, fn) { ipcMain.handle(name, async (event,...args) => { trusted(event); return fn(...args); }); }
 function register() {
   handle('state', () => ({ ...store.public(), home: os.homedir(), version: app.getVersion() }));
+  handle('metrics', id => {
+    const cpus=os.cpus(),totals=cpus.reduce((acc,cpu)=>{const times=cpu.times;acc.idle+=times.idle;acc.total+=Object.values(times).reduce((sum,value)=>sum+value,0);return acc;},{idle:0,total:0});
+    const cpu=previousCpu?100*(1-(totals.idle-previousCpu.idle)/(totals.total-previousCpu.total)):0;previousCpu=totals;
+    return {cpu:Number.isFinite(cpu)?Math.max(0,Math.min(100,cpu)):0,ram:os.totalmem()-os.freemem(),ramTotal:os.totalmem(),session:id&&sessions.items.has(id)?sessions.stats(id):null,transfer:{...files.totals}};
+  });
+  handle('editor-read',(id,target)=>editor.read(id,target));
+  handle('editor-save',(id,target,content,version)=>editor.save(id,target,content,version));
   handle('settings', value => { store.data.settings = settings(value); store.write(); setLanguage(store.data.settings.language); return store.public(); });
   handle('host-forget',async host=>{if(await confirm(tr('Kayıtlı sunucu kimliği unutulsun mu?'),host+tr('\n\nSonraki bağlantıda yeni parmak izini bağımsız olarak doğrulamalısın.'))){delete store.data.hosts[host];store.write();}return store.public();});
   handle('profile-save', input => store.saveProfile(input));
@@ -106,6 +123,7 @@ app.whenReady().then(async()=>{
     setLanguage(store.data.settings.language);
     sessions = new Sessions(store,emit,(host,fingerprint)=>confirm(tr('Sunucu kimliğini doğrula'),host+'\n\n'+fingerprint+tr('\n\nBu parmak izini sunucu yöneticinle doğruladıktan sonra onayla.')));
     files = new Files(sessions,emit,confirm);
+    editor = new Editor(sessions);
     win = new BrowserWindow({ width:1450,height:920,minWidth:980,minHeight:620,frame:false,backgroundColor:'#101218',show:!smoke&&!packageCheck,icon:path.join(__dirname,'../assets/icon.png'),webPreferences:{ preload:path.join(__dirname,'preload.cjs'),nodeIntegration:false,contextIsolation:true,sandbox:true,spellcheck:false,offscreen:smoke||packageCheck } });
     Menu.setApplicationMenu(null);
     win.webContents.setWindowOpenHandler(()=>({action:'deny'}));

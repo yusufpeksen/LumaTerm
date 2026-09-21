@@ -1,5 +1,5 @@
 const { contextBridge, ipcRenderer, webUtils } = require('electron');
-const channels = ['state','settings','host-forget','profile-save','profile-delete','pick-key','session-open','session-close','files-list','files-upload','files-download','files-mkdir','files-rename','files-delete','files-drag','pick-upload','pick-directory','workspace-save','workspace-delete','export-config','import-config','terminal-save','window-action','clipboard-read','clipboard-write','cwd-enable'];
+const channels = ['state','settings','host-forget','profile-save','profile-delete','pick-key','session-open','session-close','files-list','files-upload','files-download','files-mkdir','files-rename','files-delete','files-drag','pick-upload','pick-directory','workspace-save','workspace-delete','export-config','import-config','terminal-save','window-action','clipboard-read','clipboard-write','cwd-enable','metrics','editor-read','editor-save'];
 const api = {};
 for (const c of channels) api[c.replace(/-([a-z])/g, (_, x) => x.toUpperCase())] = (...args) => ipcRenderer.invoke(c, ...args);
 api.input = (id, data) => ipcRenderer.send('terminal-input', id, data);

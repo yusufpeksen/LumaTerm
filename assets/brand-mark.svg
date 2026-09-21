@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-label="LumaTerm">
+  <defs>
+    <linearGradient id="surface" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#222d42"/><stop offset="1" stop-color="#101620"/></linearGradient>
+    <linearGradient id="light" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#62e2d1"/><stop offset=".55" stop-color="#77bafa"/><stop offset="1" stop-color="#ad8ef6"/></linearGradient>
+  </defs>
+  <rect x="10" y="10" width="236" height="236" rx="57" fill="url(#surface)" stroke="#7189ab" stroke-opacity=".4" stroke-width="2"/>
+  <path d="M65 73h44l55 55-55 55H65l55-55z" fill="url(#light)"/>
+  <path d="M94 92h17l36 36-36 36H94l36-36z" fill="#101620"/>
+  <path d="M156 177h42" fill="none" stroke="url(#light)" stroke-width="17" stroke-linecap="round"/>
+</svg>

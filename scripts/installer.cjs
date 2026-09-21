@@ -17,6 +17,7 @@ build({
     productName: 'LumaTerm',
     copyright: 'Copyright © 2026 LumaTerm contributors',
     asar: true,
+    electronLanguages: ['en-US','tr'],
     npmRebuild: false,
     asarUnpack: ['node_modules/node-pty/**/*'],
     directories: { output: 'release', buildResources: 'assets' },

@@ -5,7 +5,7 @@ const DEFAULTS = {
   language: 'en', theme: 'midnight', accent: '#8b9cff', fontFamily: 'Cascadia Code, Consolas, monospace', fontSize: 14,
   lineHeight: 1.2, cursorStyle: 'bar', cursorBlink: true, scrollback: 10000,
   defaultShell: 'powershell.exe', startDirectory: '', copyOnSelect: false, confirmClose: true,
-  showHidden: true, keepaliveInterval: 15000, terminalBell: false, suggestions: true,
+  showHidden: true, keepaliveInterval: 15000, terminalBell: false,
   promptTheme: 'accent', promptGit: true, promptIcons: true,
   shortcuts: { newTab: 'Ctrl+Shift+T', closeTab: 'Ctrl+Shift+W', settings: 'Ctrl+,', search: 'Ctrl+Shift+F', palette: 'Ctrl+Shift+P' }
 };

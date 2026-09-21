@@ -2,13 +2,15 @@
 
 LumaTerm is an open-source Windows terminal, SSH client, and SFTP workspace. It combines native ConPTY shells, saved SSH connections, remote file management, Git-aware prompts, and reusable workspaces in one desktop application.
 
+The desktop backend currently uses Electron. The evaluated Go/Wails migration, including required parity checks, is documented in [docs/go-migration.md](docs/go-migration.md).
+
 > LumaTerm is currently a preview. It is designed for Windows 10 1809+ and Windows 11 x64 and does not claim full feature parity with Windows Terminal or MobaXterm.
 
 ## Install
 
 Download **[LumaTerm-Setup.exe](https://github.com/yusufpeksen/LumaTerm/releases/latest/download/LumaTerm-Setup.exe)** from the latest GitHub Release. The installer creates Start menu and desktop shortcuts; Node.js is not required.
 
-Preview builds are currently unsigned, so Windows SmartScreen may display an unknown-publisher warning. Installed builds check GitHub Releases shortly after startup and every four hours. Updates download in the background and preserve settings and SSH profiles under `%APPDATA%/lumaterm`.
+Preview builds are currently unsigned, so Windows SmartScreen may display an unknown-publisher warning. Installed builds check GitHub Releases shortly after startup and every four hours. You choose whether to download an available update; settings and SSH profiles remain under `%APPDATA%/lumaterm`.
 
 ## Highlights
 
@@ -21,7 +23,8 @@ Preview builds are currently unsigned, so Windows SmartScreen may display an unk
 - **Drag and drop:** Upload from Explorer and prepare remote files for dragging back to Explorer or the desktop.
 - **Directory synchronization:** The file panel follows `cd`, `Set-Location`, `Push-Location`, and `Pop-Location` in PowerShell/CMD. Bash and Zsh tracking can be enabled per SSH session.
 - **Multiple sessions:** Open many local or SSH tabs, switch quickly, or show two terminals side by side.
-- **Command suggestions:** Session history, shell commands, common subcommands, and files are suggested without executing anything automatically. Suggestions stay disabled during password input.
+- **Built-in text editor:** Open local and SFTP text files directly from the file pane, save with Ctrl+S, and avoid overwriting files changed elsewhere.
+- **Session controls:** Rename or pin tabs, resize or hide either sidebar, and monitor CPU, memory, connection age, activity age, and transfer totals in the status bar.
 - **Saved workspaces:** Reopen a named collection of local and SSH tabs.
 - **English and Turkish UI:** English is the default for new installations; Turkish remains available in Settings.
 
@@ -70,8 +73,7 @@ These examples expose the remote web service at `127.0.0.1:8080` and the remote 
 | Settings | `Ctrl+,` |
 | Copy | `Ctrl+Shift+C` |
 | Paste | `Ctrl+V` |
-| Open suggestions | `Ctrl+Space` |
-| Insert suggestion | `Ctrl+Right Arrow` |
+| Save open text file | `Ctrl+S` |
 
 Right-click copies selected terminal text or pastes when nothing is selected. LumaTerm asks before pasting multiple lines.
 
@@ -116,7 +118,7 @@ npm run smoke
 npm run package
 ```
 
-`npm run smoke` launches an isolated Electron instance, a real PowerShell/ConPTY process, and a loopback SSH/SFTP fixture. It verifies rendering, multiple sessions, DPAPI storage, password and key authentication, local port forwarding, host-key protection, transfers, file operations, directory tracking, suggestions, and output backpressure.
+`npm run smoke` launches an isolated Electron instance, a real PowerShell/ConPTY process, and a loopback SSH/SFTP fixture. It verifies rendering, multiple sessions, DPAPI storage, password and key authentication, local port forwarding, host-key protection, transfers, file editing, directory tracking, and output backpressure.
 
 `npm run package` creates `release/LumaTerm-Setup.exe`, its block map, and `latest.yml`. Pushing a matching `vX.Y.Z` tag runs the Windows release workflow and publishes those assets to GitHub Releases.
 
