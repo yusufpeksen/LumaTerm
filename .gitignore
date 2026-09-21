@@ -16,3 +16,6 @@ id_ed25519
 .DS_Store
 Thumbs.db
 .builder-cache*/
+.toolchains/
+.gopath/
+.gocache/
