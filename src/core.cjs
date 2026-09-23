@@ -7,10 +7,10 @@ const DEFAULTS = {
   defaultShell: 'powershell.exe', startDirectory: '', copyOnSelect: false, confirmClose: true,
   showHidden: true, keepaliveInterval: 15000, terminalBell: false,
   promptTheme: 'accent', promptGit: true, promptIcons: true,
-  shortcuts: { newTab: 'Ctrl+Shift+T', closeTab: 'Ctrl+Shift+W', settings: 'Ctrl+,', search: 'Ctrl+Shift+F', palette: 'Ctrl+Shift+P' }
+  shortcuts: { newTab: 'Ctrl+Shift+T', closeTab: 'Ctrl+Shift+W', settings: 'Ctrl+,', search: 'Ctrl+Shift+F' }
 };
 function settings(input = {}) {
-  const out = { ...DEFAULTS, ...input, shortcuts: { ...DEFAULTS.shortcuts, ...input.shortcuts } };
+  const out = { ...DEFAULTS, ...input, shortcuts: Object.fromEntries(Object.entries(DEFAULTS.shortcuts).map(([key,value])=>[key,typeof input.shortcuts?.[key]==='string'?input.shortcuts[key]:value])) };
   for (const [k,min,max] of [['fontSize',9,32],['lineHeight',1,2],['scrollback',100,100000],['keepaliveInterval',5000,120000]]) {
     out[k] = Math.min(max, Math.max(min, Number(out[k]) || DEFAULTS[k]));
   }

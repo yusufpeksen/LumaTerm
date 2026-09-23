@@ -12,6 +12,7 @@ class Store {
       catch { throw new Error(tr('Ayar dosyası okunamadı. Dosya korunuyor: ') + this.file); }
     }
     this.data.settings = settings(this.data.settings);
+    delete this.data.commands;
   }
   write() { fs.writeFileSync(this.file + '.tmp', JSON.stringify(this.data, null, 2), { mode: 0o600 }); fs.renameSync(this.file + '.tmp', this.file); }
   encrypt(value) {

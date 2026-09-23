@@ -3,15 +3,15 @@
 All notable changes to LumaTerm are recorded here. Versions follow Semantic
 Versioning and are published from matching `vX.Y.Z` Git tags.
 
-## [Unreleased] - 0.6.0-beta.1 local validation
+## [0.6.0] - 2026-09-23
 
-- Added CPU and memory usage, session timers, and transfer totals and speed to the status bar.
+- Added active-device CPU, memory, uptime, session duration, and network statistics to the status bar. SSH tabs read metrics from the connected Linux server instead of the local PC.
 - Added a built-in UTF-8 editor for local and SFTP files, with stale-file protection.
-- Added tab renaming and pinning, collapsible and resizable sidebars, and a file-open action for the current terminal directory.
-- Fixed terminal content clipping beneath its scrollbar and footer.
-- Added file-type icon colors and a new horizontal logo and Windows icon.
+- Added tab renaming and pinning, a resizable Files/Sessions workspace, and a file-open action for the current terminal directory.
+- Moved new-terminal and settings controls to the top bar and refreshed the status cards, file-type icons, and horizontal logo.
+- Moved the terminal scrollbar into a dedicated outer gutter so long output never renders beneath it.
 - Prompt before downloading an available update.
-- Removed command suggestions and their code.
+- Removed command suggestions and the command palette.
 - Reduced the Windows setup size by retaining only English and Turkish Electron locales.
 - Documented the Go/Wails migration decision and parity gates; the running backend is still Electron.
 

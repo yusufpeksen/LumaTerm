@@ -1,6 +1,8 @@
 // Only application-owned strings are translated. User names, paths and terminal
 // output are passed as template arguments and are never searched or replaced.
 const EN = {
+  'Dosyalar': 'Files', 'Oturumlar': 'Sessions',
+  'Çalışma süresi': 'Uptime', 'Bağlı sunucu': 'Connected server',
   'Bağlantı': 'Connected', 'Etkinlik': 'Idle',
   'Yeniden adlandırmak için çift tıkla; sekme işlemleri için sağ tıkla': 'Double-click to rename; right-click for tab actions',
   'Sekmenin sabitini kaldır': 'Unpin tab', 'Sekmeyi sabitle': 'Pin tab',
@@ -26,7 +28,7 @@ const EN = {
   'Küçült': 'Minimize', 'Büyüt': 'Maximize', 'Kapat': 'Close',
   'ÇALIŞMA ALANI': 'WORKSPACE', 'ÇALIŞMA ALANLARI': 'WORKSPACES',
   'YEREL PROFİLLER': 'LOCAL PROFILES', 'SSH BAĞLANTILARI': 'SSH CONNECTIONS',
-  'Yeni terminal': 'New terminal', 'Komut paleti': 'Command palette',
+  'Yeni terminal': 'New terminal',
   'Bağlantı ekle': 'Add connection', 'Bağlantı ara…': 'Search connections…',
   'Açık sekmeleri kaydet': 'Save open tabs', 'Bu bilgisayar': 'This computer',
   'Ayarlar': 'Settings', 'İki oturumu yan yana göster': 'Show two sessions side by side',
@@ -35,7 +37,6 @@ const EN = {
   'Yerel terminalin, uzak sunucuların ve dosyaların.': 'Your local terminal, remote servers and files.',
   'Hepsi aynı yerde, bıraktığın düzende.': 'All in one place, just how you left them.',
   'Terminal aç': 'Open terminal', 'SSH bağlantısı ekle': 'Add SSH connection',
-  'ile komut paletini aç': 'to open the command palette',
   'Terminalde ara': 'Search terminal', 'Çıktıyı dosyaya kaydet': 'Save output to file',
   'Ekranı temizle': 'Clear terminal', 'Yeni oturumla yeniden bağlan': 'Reconnect in a new session',
   'Terminal çıktısında ara…': 'Search terminal output…', 'Dosya gezgini': 'File explorer',
@@ -107,8 +108,6 @@ const EN = {
   'Ayarlar uygulandı.': 'Settings applied.', 'Dışa aktarılan ayarlara parolalar dahil edilmez.': 'Exported settings do not include passwords.',
   'Bölünmüş görünüm': 'Split view', 'Dosya panelini aç / kapat': 'Toggle files panel',
   'Çalışma alanını kaydet': 'Save workspace', 'Bağlan: ': 'Connect: ',
-  'Aradığını yaz, Enter ile aç.': 'Type to search, press Enter to open.',
-  'Bir komut veya sunucu ara…': 'Search commands or servers…',
   'Önce kaydetmek istediğin oturumları aç.': 'Open the sessions you want to save first.',
   'Açık oturumlar bu adla yeniden açılabilir. Terminal çıktısı kaydedilmez.': 'Reopen these sessions under this name. Terminal output is not saved.',
   'Çalışma alanı kaydedildi.': 'Workspace saved.', 'İndir': 'Download',

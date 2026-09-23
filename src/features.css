@@ -14,9 +14,12 @@
 .file-tools button{width:25px;height:24px}.file-tools button:hover{color:var(--accent);background:var(--bg)}.file-tools svg{width:14px;height:14px}
 .file-spacer{pointer-events:none;flex-shrink:0}.file-list{overflow-anchor:none}.local-explorer{border-top:0}
 .file-actions{gap:6px;padding:3px 12px 10px}.file-actions button{height:29px;border:1px solid var(--border);padding:5px 9px}.file-actions button:hover{color:var(--accent);border-color:var(--accent)}
-.terminal-pane{position:relative;display:flex;flex-direction:column;height:100%;min-height:0;padding:8px 15px 11px 12px;box-sizing:border-box}
-.terminal-pane .xterm{width:100%;height:100%;min-width:0;min-height:0;flex:1;overflow:hidden;padding-right:12px;background:var(--terminal)}
-.terminal-pane .xterm-viewport{right:0!important;bottom:0!important;background:var(--terminal)!important;scrollbar-color:var(--border) var(--terminal)}
+.terminal-pane{position:relative;display:flex;flex-direction:column;height:100%;min-height:0;padding:8px 8px 11px 12px;box-sizing:border-box;overflow:hidden}
+.terminal-frame{position:relative;width:calc(100% - 32px);height:100%;min-width:0;min-height:0;flex:1 1 auto;margin-right:32px;overflow:visible}
+.terminal-frame .xterm{width:100%;height:100%;min-width:0;min-height:0;overflow:visible;padding:0;background:var(--terminal)}
+.terminal-frame .xterm-viewport{right:-32px!important;bottom:0!important;background:var(--terminal)!important;scrollbar-color:var(--border) var(--terminal)}
+.terminal-frame .xterm-scrollable-element{overflow:visible!important}
+.terminal-frame .xterm-scrollable-element > .scrollbar.vertical{right:-32px!important}
 .terminal-pane .xterm-viewport::-webkit-scrollbar-track{background:var(--terminal)}.terminal-pane .xterm-scroll-area{background:var(--terminal)}
 #terminal-host{overflow:hidden;min-width:0;min-height:0}
 #terminal-area{min-height:0;overflow:hidden}
@@ -38,3 +41,17 @@ dialog:has(#editor-content){width:min(1000px,94vw);height:min(760px,90vh)}dialog
 textarea{font:inherit;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:7px;padding:9px 11px;outline:none;resize:vertical;font-family:Consolas,monospace;line-height:1.5}textarea:focus{border-color:var(--accent)}.field textarea{width:100%}
 .file-filter{position:relative;margin:9px 10px 2px}.file-filter svg{position:absolute;left:9px;top:8px;width:13px;height:13px;color:var(--muted)}.file-filter input{width:100%;height:30px;padding:6px 8px 6px 29px;font-size:10px}
 .settings-nav{position:sticky;top:-21px;z-index:3;display:flex;gap:5px;padding:10px 0;margin:-10px 0 14px;background:var(--surface);border-bottom:1px solid var(--border);overflow:auto}.settings-nav button{flex:0 0 auto;padding:7px 10px;color:var(--muted);background:var(--raised);font-size:10px}.settings-nav button:hover{color:var(--text)}dialog:has(#settings-form){width:680px}
+#left-workspace{width:320px;min-width:260px;max-width:490px;display:flex;flex-direction:column;flex:0 0 auto;min-height:0;overflow:hidden;background:var(--surface)}
+#workspace-tabs{display:flex;gap:4px;padding:8px 9px;flex:0 0 auto;border-bottom:1px solid var(--border)}
+#workspace-tabs button{min-width:0;flex:1;height:34px;gap:6px;padding:0 5px;color:var(--muted);font-size:11px;border:1px solid transparent}#workspace-tabs button svg{width:15px;height:15px}#workspace-tabs button:hover{color:var(--text)}#workspace-tabs button.active{color:var(--accent);background:var(--raised);border-color:var(--border)}
+#left-workspace #file-panel,#left-workspace #sidebar{width:100%;min-width:0;max-width:none;flex:1;min-height:0;border:0;resize:none}
+#left-workspace #sidebar{padding:12px 14px;overflow:auto}#left-workspace #sidebar>.primary,#left-workspace #sidebar .side-top,#left-workspace #sidebar #settings-button{display:none}
+#left-workspace #sidebar .section-heading:first-of-type{margin-top:5px}
+#header-actions{display:flex;align-items:center;gap:7px;margin-left:auto;padding:0 12px;-webkit-app-region:no-drag}#header-actions .header-new,#header-actions .header-settings{height:32px;padding:0 12px;background:var(--raised);border:1px solid var(--border);font-size:11px;font-weight:600;white-space:nowrap}#header-actions .header-new:hover,#header-actions .header-settings:hover{border-color:var(--accent);color:var(--accent)}#header-actions .header-settings svg{width:15px;height:15px}
+#titlebar .title-hint{display:none}.brand-logo{width:197px;height:38px;object-fit:contain;object-position:left center}.brand{padding-left:12px}.brand .version{margin-left:4px}
+#session-layout{flex:1;min-height:0}#session-layout #terminal-area{width:100%}#files-toggle svg{width:16px;height:16px}
+footer{height:52px;min-height:52px;gap:8px;padding:0 10px}#footer-status{max-width:132px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}#footer-right{font-size:9px;max-width:125px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#footer-metrics{display:flex;align-items:center;justify-content:center;gap:8px;flex:1;min-width:0;height:100%;overflow-x:auto;overflow-y:hidden;text-align:left;text-overflow:clip;scrollbar-width:thin}
+.metric-card{display:inline-flex;align-items:center;gap:7px;flex:0 0 auto;min-width:78px;max-width:180px;padding:5px 8px;border-radius:8px;background:var(--raised);border:1px solid var(--border)}.metric-card:first-child{min-width:108px}.metric-card svg{width:15px;height:15px;color:var(--accent)}.metric-copy{display:flex;flex-direction:column;gap:2px;min-width:0;line-height:1.1}.metric-copy small{font-size:9px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.metric-copy strong{font-size:10px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:1050px){#footer-right{display:none}.metric-card{min-width:70px;padding:4px 6px}#footer-metrics{justify-content:flex-start}}
+@media(max-width:760px){#left-workspace{min-width:220px}#workspace-tabs button span{display:none}#header-actions .header-new{font-size:0;gap:0}#header-actions .header-new svg{width:16px;height:16px}.brand .version{display:none}}

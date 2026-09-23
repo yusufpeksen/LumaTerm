@@ -27,6 +27,12 @@ async function fixture(root) {
       });
       client.on('session',accept=>{
       const session=accept();session.on('pty',accept=>accept());session.on('window-change',accept=>accept?.());
+      session.on('exec',(accept,reject,info)=>{
+        if(info.command!=='cat /proc/stat /proc/meminfo /proc/net/dev /proc/uptime')return reject();
+        const stream=accept();
+        stream.write('cpu  100 0 20 400 0 0 0 0 0 0\nMemTotal: 8192000 kB\nMemAvailable: 4096000 kB\neth0: 1024 0 0 0 0 0 0 0 2048 0 0 0 0 0 0 0\n12345.5 120.0\n');
+        stream.exit(0);stream.end();
+      });
       session.on('shell',accept=>{
         const stream=accept();let line='',password=false,screen=false;
         const prompt=()=>stream.write('fixture@host:~$ ');

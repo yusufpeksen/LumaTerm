@@ -8,6 +8,7 @@ const net = require('node:net');
 const { CwdParser, quoteShell } = require('./core.cjs');
 const { localShell, remoteShellCommand } = require('./shell-integration.cjs');
 const { OutputFlow } = require('./output-flow.cjs');
+const { parseProc, calculate } = require('./remote-metrics.cjs');
 class Sessions {
   constructor(store, emit, verify) { this.store = store; this.emit = emit; this.verify = verify; this.items = new Map(); }
   get(id) { const s = this.items.get(id); if (!s) throw new Error(tr('Oturum kapalı.')); return s; }
@@ -102,6 +103,28 @@ class Sessions {
   }
   input(id, data) { const s = this.get(id); if (s.ready && typeof data === 'string') {s.bytesOut+=Buffer.byteLength(data);s.lastActivityAt=Date.now();(s.pty || s.stream).write(data);} }
   stats(id) {const s=this.items.get(id);return s?{openedAt:s.openedAt,endedAt:s.endedAt||null,lastActivityAt:s.lastActivityAt,bytesIn:s.bytesIn,bytesOut:s.bytesOut,connected:s.ready,kind:s.kind}:null;}
+  async remoteMetrics(id){
+    const s=this.get(id);
+    if(s.kind!=='ssh'||!s.ready)return null;
+    const now=Date.now();
+    if(s.remoteMetricsCache&&now-s.remoteMetricsCache.at<(s.remoteMetricsCache.value?2500:15000))return s.remoteMetricsCache.value;
+    if(s.remoteMetricsPending)return s.remoteMetricsPending;
+    s.remoteMetricsPending=new Promise((resolve,reject)=>{
+      const command='cat /proc/stat /proc/meminfo /proc/net/dev /proc/uptime';
+      s.client.exec(command,(error,stream)=>{
+        if(error)return reject(error);
+        let output='',finished=false;
+        const timer=setTimeout(()=>{finished=true;stream.close();reject(new Error('Remote metrics timed out.'));},4000);
+        stream.on('data',chunk=>{if(finished)return;output+=chunk.toString();if(output.length>262144){finished=true;clearTimeout(timer);stream.close();reject(new Error('Remote metrics response is too large.'));}});
+        stream.on('error',error=>{if(!finished){finished=true;clearTimeout(timer);reject(error);}});
+        stream.on('close',()=>{if(!finished){finished=true;clearTimeout(timer);resolve(output);}});
+      });
+    }).then(output=>{
+      const sampledAt=Date.now(),sample=parseProc(output),value=calculate(s.remoteMetricsSample,sample,sampledAt-(s.remoteMetricsSampleAt||sampledAt));
+      s.remoteMetricsSample=sample;s.remoteMetricsSampleAt=sampledAt;s.remoteMetricsCache={at:sampledAt,value};return value;
+    }).catch(()=>{s.remoteMetricsCache={at:Date.now(),value:null};return null;}).finally(()=>{s.remoteMetricsPending=null;});
+    return s.remoteMetricsPending;
+  }
   attach(id){this.get(id).output?.attach();}
   acknowledge(id,count){this.items.get(id)?.output?.acknowledge(count);}
   resize(id, cols, rows) { const s = this.get(id); cols = Math.max(2, Math.min(500, Number(cols) || 80)); rows = Math.max(2, Math.min(300, Number(rows) || 24)); if(s.ready) s.pty ? s.pty.resize(cols, rows) : s.stream.setWindow(rows, cols, 0, 0); }

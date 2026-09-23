@@ -7,7 +7,7 @@ import { icon, paintIcons, shellIcon, fileIcon } from './icons.js';
 import { VirtualFiles } from './virtual-files.js';
 const $ = id => document.getElementById(id), api = window.luma;
 const esc = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let state, active, split = false, panelVisible = true, sidebarVisible = true, localDir, remoteDir = '/', remoteEntries = [], localEntries = [], remoteRequest = 0, localRequest = 0;
+let state, active, split = false, sidebarVisible = true, leftTab = 'files', localDir, remoteDir = '/', remoteEntries = [], localEntries = [], remoteRequest = 0, localRequest = 0;
 const tabs = new Map(), pending = new Map(), transfers = new Map();
 let translateStaticUi = () => {};
 let remoteView, localView, fitFrame;
@@ -24,6 +24,11 @@ function applySettings() {
   document.documentElement.style.setProperty('--accent',state.settings.accent);
   for(const s of tabs.values()) { Object.assign(s.term.options,terminalOptions()); s.fit.fit(); }
   sidebar(); updateTabs(); updateFooter();
+  if($('header-actions')){
+    $('new-terminal').innerHTML=icon('plus')+esc(tr('Yeni terminal'));
+    $('settings-button').title=tr('Ayarlar');$('settings-button').querySelector('span').textContent=tr('Ayarlar');
+    for(const [tab,label] of [['files','Dosyalar'],['sessions','Oturumlar']])document.querySelector(`[data-left-tab="${tab}"] span`).textContent=tr(label);
+  }
 }
 function terminalOptions() {
   const v=state.settings, light=v.theme==='light', forest=v.theme==='forest';
@@ -57,8 +62,9 @@ async function openSession(spec) {
     const term=new Terminal(terminalOptions()), fit=new FitAddon(), search=new SearchAddon();
     term.loadAddon(fit); term.loadAddon(search);
     const pane=document.createElement('div'); pane.className='terminal-pane'; $('terminal-host').append(pane);
+    const frame=document.createElement('div');frame.className='terminal-frame';pane.append(frame);
     const s={...result,term,fit,search,pane,remoteDir:result.cwd,localDir:result.kind==='local'?result.cwd:localDir,follow:false}; tabs.set(s.id,s);
-    term.open(pane);
+    term.open(frame);
     term.onData(data=>api.input(s.id,data));
     term.onResize(({cols,rows})=>api.resize(s.id,cols,rows));
     term.onSelectionChange(()=>{if(state.settings.copyOnSelect && term.hasSelection()) api.clipboardWrite(term.getSelection());});
@@ -87,8 +93,22 @@ async function pasteInto(s) { const text=await api.clipboardRead(); if(/[\r\n]/.
 function updateFooter(){ $('footer-status').textContent=tabs.size?msg`${tabs.size} oturum · ${[...tabs.values()].filter(s=>s.kind==='ssh').length} SSH`:tr('Hazır'); }
 const elapsed = milliseconds => { const seconds=Math.max(0,Math.floor(milliseconds/1000));return `${Math.floor(seconds/3600).toString().padStart(2,'0')}:${Math.floor(seconds%3600/60).toString().padStart(2,'0')}:${(seconds%60).toString().padStart(2,'0')}`; };
 async function updateMetrics(){
-  try{const data=await api.metrics(active),s=data.session,now=s?.endedAt||Date.now();
-    $('footer-metrics').textContent=`CPU ${data.cpu.toFixed(1)}%  ·  RAM ${size(data.ram)} / ${size(data.ramTotal)}  ·  ${tr('Bağlantı')} ${s?elapsed(now-s.openedAt):'—'}  ·  ${tr('Etkinlik')} ${s?elapsed(now-s.lastActivityAt):'—'}  ·  ↓ ${size(data.transfer.download)}  ↑ ${size(data.transfer.upload)}`;
+  const selected=active;
+  try{
+    const data=await api.metrics(selected);
+    if(selected!==active)return;
+    const s=data.session,now=s?.endedAt||Date.now(),remote=data.source==='ssh',system=remote?data.remote:data;
+    const card=(name,label,value,hint='')=>`<span class="metric-card" title="${esc(hint||label)}">${icon(name)}<span class="metric-copy"><small>${esc(label)}</small><strong>${esc(value)}</strong></span></span>`;
+    const unavailable='—',source=remote?(data.host||'SSH'):tr('Bu bilgisayar');
+    const cpu=system?.cpu==null?unavailable:system.cpu.toFixed(1)+'%';
+    const ram=system?.ramTotal?`${size(system.ram)} / ${size(system.ramTotal)}`:unavailable;
+    const uptime=system?.uptime!=null?elapsed(system.uptime*1000):unavailable;
+    const down=remote?(system?size(system.rxRate)+'/s':unavailable):size(data.transfer.download);
+    const up=remote?(system?size(system.txRate)+'/s':unavailable):size(data.transfer.upload);
+    $('footer-metrics').innerHTML=card(remote?'server':'monitor',source,remote?'SSH':'LOCAL',remote?tr('Bağlı sunucu'):tr('Bu bilgisayar'))+
+      card('cpu','CPU',cpu)+card('memory-stick','RAM',ram)+card('timer',tr('Çalışma süresi'),uptime)+
+      card('link-2',tr('Bağlantı'),s?elapsed(now-s.openedAt):unavailable)+
+      card('download',remote?'RX':'SFTP ↓',down)+card('upload',remote?'TX':'SFTP ↑',up);
   }catch{}
 }
 function updateTabs(){
@@ -97,12 +117,12 @@ function updateTabs(){
 }
 async function renameTab(id){const s=tabs.get(id);if(!s)return;const value=await promptValue(tr('Sekmeyi yeniden adlandır'),tr('Bu oturuma bir ad ver.'),s.title);if(value?.trim()){s.title=value.trim().slice(0,80);updateTabs();}}
 function tabActions(id){const s=tabs.get(id);if(!s)return;modal(tr('Sekme işlemleri'),s.title,`<div class="tab-actions"><button id="tab-rename" class="secondary">${icon('pencil')} ${esc(tr('Yeniden adlandır'))}</button><button id="tab-pin-toggle" class="secondary">${icon(s.pinned?'pin-off':'pin')} ${esc(s.pinned?tr('Sabiti kaldır'):tr('Sabitle'))}</button></div>`);$('tab-rename').onclick=()=>{$('modal').close();renameTab(id);};$('tab-pin-toggle').onclick=()=>{s.pinned=!s.pinned;$('modal').close();updateTabs();};}
-function activate(id){active=id; updateTabs(); layout(); updateSessionInfo(); current()?.term.focus(); }
+function activate(id){active=id; updateTabs(); layout(); updateSessionInfo(); updateMetrics(); current()?.term.focus(); }
 function layout(){
   $('welcome').hidden=!!tabs.size; $('session-layout').hidden=!tabs.size;
   const values=[...tabs.values()], second=split?values.find(s=>s.id!==active):null;
   for(const s of values){s.pane.hidden=s.id!==active&&s!==second; s.pane.classList.toggle('focused',s.id===active);}
-  $('file-panel').hidden=!panelVisible; $('sidebar').hidden=!sidebarVisible; $('left-resizer').hidden=!sidebarVisible; $('right-resizer').hidden=!panelVisible||!tabs.size; $('split-button').style.color=split?'var(--accent)':'';
+  $('left-workspace').hidden=!sidebarVisible; $('left-resizer').hidden=!sidebarVisible; $('split-button').style.color=split?'var(--accent)':'';
   scheduleFit();
 }
 function scheduleFit(){if(fitFrame)return;fitFrame=requestAnimationFrame(()=>{fitFrame=null;for(const s of tabs.values())if(!s.pane.hidden){try{s.fit.fit();}catch{}}});}
@@ -114,7 +134,7 @@ function updateSessionInfo(){
   if(s?.kind==='ssh'){remoteDir=s.remoteDir||s.cwd||'/';$('remote-path').value=remoteDir;$('cwd-follow').textContent=s.follow?tr('Takip açık'):tr('Dizini takip et');run(()=>loadRemote())();}
   if(s?.kind==='local')run(()=>loadLocal(s.cwd))();
 }
-async function closeSession(id){const s=tabs.get(id);if(!s)return;if(s.pinned)return;if(state.settings.confirmClose&&!s.exited&&!await ask(tr('Oturum kapatılsın mı?'),s.title+tr(' oturumundaki çalışan işlemler sonlanır.')))return;await api.sessionClose(id);s.term.dispose();s.pane.remove();tabs.delete(id);if(active===id)active=[...tabs.keys()].at(-1);updateTabs();layout();updateSessionInfo();updateFooter();}
+async function closeSession(id){const s=tabs.get(id);if(!s)return;if(s.pinned)return;if(state.settings.confirmClose&&!s.exited&&!await ask(tr('Oturum kapatılsın mı?'),s.title+tr(' oturumundaki çalışan işlemler sonlanır.')))return;await api.sessionClose(id);s.term.dispose();s.pane.remove();tabs.delete(id);if(active===id)active=[...tabs.keys()].at(-1);updateTabs();layout();updateSessionInfo();updateFooter();updateMetrics();}
 function eventReceived(e){
   if(e.type==='notice'){toast(e.message,true);return;}
   if(e.type==='transfer'){const previous=transfers.get(e.transferId),at=Date.now();e.rate=previous?.name===e.name?Math.max(0,(e.done-previous.done)*1000/Math.max(1,at-previous.at)):0;e.at=at;transfers.set(e.transferId,e);renderTransfer();return;}
@@ -150,7 +170,7 @@ function profileModal(p={}) {
 async function settingsModal(){
   Object.assign(state,await api.state());
   const s=state.settings;
-  modal(tr('Sana göre bir terminal'),tr('Görünüm, davranış ve bağlantı tercihleri.'),msg`<form id="settings-form"><div class="form-grid"><div class="form-section">GÖRÜNÜM</div>${selectField(tr('Tema'),'theme',s.theme,[['midnight',tr('Gece')],['light',tr('Aydınlık')],['forest',tr('Orman')]])}${field(tr('Vurgu rengi'),'accent',s.accent,'color')}${field(tr('Yazı tipi'),'fontFamily',s.fontFamily,'text',true)}${field(tr('Yazı boyutu (9–32)'),'fontSize',s.fontSize,'number')}${field(tr('Satır yüksekliği (1–2)'),'lineHeight',s.lineHeight,'number')}${selectField(tr('İmleç'),'cursorStyle',s.cursorStyle,[['bar',tr('Çizgi')],['block',tr('Blok')],['underline',tr('Alt çizgi')]])}${field(tr('Geçmiş satır sayısı'),'scrollback',s.scrollback,'number')}<div class="form-section">TERMİNAL VE SSH</div>${field(tr('Varsayılan kabuk / uygulama yolu'),'defaultShell',s.defaultShell,'text',true)}${field(tr('Başlangıç klasörü (boş: kullanıcı klasörü)'),'startDirectory',s.startDirectory,'text',true)}${field(tr('SSH canlı tutma aralığı (ms)'),'keepaliveInterval',s.keepaliveInterval,'number')}<div class="field">Davranış${[['cursorBlink',tr('Yanıp sönen imleç')],['copyOnSelect',tr('Seçileni otomatik kopyala')],['confirmClose',tr('Kapatırken onay iste')],['showHidden',tr('Gizli dosyaları göster')],['terminalBell',tr('Terminal bildirimini göster')]].map(([k,n])=>`<label class="check-field"><input type="checkbox" name="${k}" ${s[k]?'checked':''}>${n}</label>`).join('')}</div><div class="form-section">KLAVYE KISAYOLLARI</div>${Object.entries(s.shortcuts).map(([k,v])=>field(({newTab:tr('Yeni terminal'),closeTab:tr('Sekmeyi kapat'),settings:tr('Ayarlar'),search:tr('Terminalde ara'),palette:tr('Komut paleti')})[k],'shortcut-'+k,v)).join('')}</div><div class="info-box">Ctrl+Shift+C: kopyala · Ctrl+V: yapıştır · Ctrl+Tab: sonraki sekme.<br>PowerShell 7 ve WSL, bilgisayarda kuruluysa kullanılabilir. SSH canlı tutma ayarı yeni bağlantılarda uygulanır.</div></form>`,msg`<button id="settings-export" class="secondary" style="margin-right:auto">Dışa aktar</button><button id="settings-import" class="secondary">İçe aktar</button><button id="settings-submit" class="primary">Kaydet</button>`);
+  modal(tr('Sana göre bir terminal'),tr('Görünüm, davranış ve bağlantı tercihleri.'),msg`<form id="settings-form"><div class="form-grid"><div class="form-section">GÖRÜNÜM</div>${selectField(tr('Tema'),'theme',s.theme,[['midnight',tr('Gece')],['light',tr('Aydınlık')],['forest',tr('Orman')]])}${field(tr('Vurgu rengi'),'accent',s.accent,'color')}${field(tr('Yazı tipi'),'fontFamily',s.fontFamily,'text',true)}${field(tr('Yazı boyutu (9–32)'),'fontSize',s.fontSize,'number')}${field(tr('Satır yüksekliği (1–2)'),'lineHeight',s.lineHeight,'number')}${selectField(tr('İmleç'),'cursorStyle',s.cursorStyle,[['bar',tr('Çizgi')],['block',tr('Blok')],['underline',tr('Alt çizgi')]])}${field(tr('Geçmiş satır sayısı'),'scrollback',s.scrollback,'number')}<div class="form-section">TERMİNAL VE SSH</div>${field(tr('Varsayılan kabuk / uygulama yolu'),'defaultShell',s.defaultShell,'text',true)}${field(tr('Başlangıç klasörü (boş: kullanıcı klasörü)'),'startDirectory',s.startDirectory,'text',true)}${field(tr('SSH canlı tutma aralığı (ms)'),'keepaliveInterval',s.keepaliveInterval,'number')}<div class="field">Davranış${[['cursorBlink',tr('Yanıp sönen imleç')],['copyOnSelect',tr('Seçileni otomatik kopyala')],['confirmClose',tr('Kapatırken onay iste')],['showHidden',tr('Gizli dosyaları göster')],['terminalBell',tr('Terminal bildirimini göster')]].map(([k,n])=>`<label class="check-field"><input type="checkbox" name="${k}" ${s[k]?'checked':''}>${n}</label>`).join('')}</div><div class="form-section">KLAVYE KISAYOLLARI</div>${Object.entries(s.shortcuts).map(([k,v])=>field(({newTab:tr('Yeni terminal'),closeTab:tr('Sekmeyi kapat'),settings:tr('Ayarlar'),search:tr('Terminalde ara')})[k],'shortcut-'+k,v)).join('')}</div><div class="info-box">Ctrl+Shift+C: kopyala · Ctrl+V: yapıştır · Ctrl+Tab: sonraki sekme.<br>PowerShell 7 ve WSL, bilgisayarda kuruluysa kullanılabilir. SSH canlı tutma ayarı yeni bağlantılarda uygulanır.</div></form>`,msg`<button id="settings-export" class="secondary" style="margin-right:auto">Dışa aktar</button><button id="settings-import" class="secondary">İçe aktar</button><button id="settings-submit" class="primary">Kaydet</button>`);
   $('settings-form').elements.lineHeight.step='0.05';
   const languageField=document.createElement('div');languageField.className='field wide';
   languageField.innerHTML=selectField(tr('Dil / Language'),'language',s.language,[['tr','Türkçe'],['en','English']]);
@@ -170,7 +190,6 @@ async function settingsModal(){
   on('settings-export',async()=>{await api.exportConfig();toast(tr('Dışa aktarılan ayarlara parolalar dahil edilmez.'));});
   on('settings-import',async()=>{Object.assign(state,await api.importConfig());applySettings();sidebar();$('modal').close();});
 }
-function palette(){const actions=[[tr('Yeni terminal'),()=>openSession({kind:'local'})],[tr('SSH bağlantısı ekle'),()=>profileModal()],[tr('Ayarlar'),settingsModal],[tr('Bölünmüş görünüm'),()=>{split=!split;layout();}],[tr('Dosya panelini aç / kapat'),()=>{panelVisible=!panelVisible;layout();}],[tr('Çalışma alanını kaydet'),saveWorkspace],...state.profiles.map(p=>[tr('Bağlan: ')+p.name,()=>connect(p.id)])];modal(tr('Komut paleti'),tr('Aradığını yaz, Enter ile aç.'),tr('<input id="palette-query" class="full" placeholder="Bir komut veya sunucu ara…"><div id="palette-results" class="palette-list"></div>'));const render=()=>{const list=actions.filter(([n])=>n.toLocaleLowerCase(getLanguage()).includes($('palette-query').value.toLocaleLowerCase(getLanguage())));$('palette-results').innerHTML=list.map(([n],i)=>`<button data-action="${i}">${icon('chevron-right')}${esc(n)}</button>`).join('');$('palette-results').querySelectorAll('button').forEach(b=>b.onclick=run(()=>{$('modal').close();return list[Number(b.dataset.action)][1]();}));paintIcons();};$('palette-query').oninput=render;$('palette-query').onkeydown=e=>{if(e.key==='Enter')$('palette-results').querySelector('button')?.click();};render();$('palette-query').focus();}
 async function saveWorkspace(){if(!tabs.size){toast(tr('Önce kaydetmek istediğin oturumları aç.'));return;}const name=await promptValue(tr('Çalışma alanını kaydet'),tr('Açık oturumlar bu adla yeniden açılabilir. Terminal çıktısı kaydedilmez.'));if(!name?.trim())return;Object.assign(state,await api.workspaceSave({name,sessions:[...tabs.values()].map(s=>s.spec)}));sidebar();toast(tr('Çalışma alanı kaydedildi.'));}
 const remoteJoin=(dir,name)=>(dir==='/'?'':dir.replace(/\/$/,''))+'/'+name;
 const remoteParent=dir=>dir.replace(/\/+$/,'').split('/').slice(0,-1).join('/')||'/';
@@ -223,9 +242,32 @@ async function openEditor(id,target){
 function installResizer(id,panel,side,min,max){
   const handle=document.createElement('div');handle.id=id;handle.className='panel-resizer';handle.setAttribute('role','separator');handle.setAttribute('aria-orientation','vertical');panel[side==='left'?'after':'before'](handle);
   handle.onpointerdown=e=>{e.preventDefault();handle.setPointerCapture(e.pointerId);document.body.classList.add('resizing-panel');};
-  handle.onpointermove=e=>{if(!handle.hasPointerCapture(e.pointerId))return;const rect=document.querySelector('.app-layout').getBoundingClientRect();const width=side==='left'?e.clientX-rect.left:rect.right-e.clientX;const other=side==='left'?($('file-panel').hidden?0:$('file-panel').getBoundingClientRect().width+5):($('sidebar').hidden?0:$('sidebar').getBoundingClientRect().width+5);panel.style.width=Math.max(min,Math.min(max,rect.width-other-320,width))+'px';scheduleFit();};
+  handle.onpointermove=e=>{if(!handle.hasPointerCapture(e.pointerId))return;const rect=document.querySelector('.app-layout').getBoundingClientRect();const width=e.clientX-rect.left;panel.style.width=Math.max(min,Math.min(max,rect.width-320,width))+'px';scheduleFit();};
   handle.onpointerup=e=>{if(handle.hasPointerCapture(e.pointerId))handle.releasePointerCapture(e.pointerId);document.body.classList.remove('resizing-panel');localStorage.setItem(id+'-width',panel.style.width);};
   const saved=Number.parseInt(localStorage.getItem(id+'-width'),10);if(Number.isFinite(saved))panel.style.width=Math.max(min,Math.min(max,saved))+'px';
+}
+function selectLeftTab(name){
+  leftTab=name;localStorage.setItem('left-tab',name);
+  for(const [tab,id] of [['files','file-panel'],['sessions','sidebar']]){
+    $(id).hidden=name!==tab;
+    const button=document.querySelector(`[data-left-tab="${tab}"]`);
+    button.classList.toggle('active',name===tab);
+    button.setAttribute('aria-selected',String(name===tab));
+  }
+  scheduleFit();
+}
+function buildLeftWorkspace(){
+  const workspace=document.createElement('aside');workspace.id='left-workspace';
+  workspace.innerHTML=`<div id="workspace-tabs" role="tablist"><button data-left-tab="files" role="tab">${icon('folders')}<span>${esc(tr('Dosyalar'))}</span></button><button data-left-tab="sessions" role="tab">${icon('server')}<span>${esc(tr('Oturumlar'))}</span></button></div>`;
+  document.querySelector('.app-layout').prepend(workspace);
+  workspace.append($('file-panel'),$('sidebar'));
+  const header=document.createElement('div');header.id='header-actions';document.querySelector('.window-buttons').before(header);
+  header.append($('new-terminal'),$('settings-button'));
+  $('new-terminal').className='header-new';$('new-terminal').innerHTML=icon('plus')+esc(tr('Yeni terminal'));
+  $('settings-button').className='header-settings';$('settings-button').innerHTML=icon('settings-2')+`<span>${esc(tr('Ayarlar'))}</span>`;$('settings-button').title=tr('Ayarlar');
+  document.querySelector('.side-top').hidden=true;
+  document.querySelectorAll('[data-left-tab]').forEach(b=>b.onclick=()=>selectLeftTab(b.dataset.leftTab));
+  selectLeftTab(['files','sessions'].includes(localStorage.getItem('left-tab'))?localStorage.getItem('left-tab'):'files');
 }
 function searchTerminal(){if(!current())return;$('terminal-search').hidden=false;$('terminal-search-input').focus();}
 async function init(){
@@ -234,24 +276,25 @@ async function init(){
   localView=new VirtualFiles($('local-files'),entries=>fileRows(entries,false),()=>bindFiles(false));
   api.on(eventReceived);state=await api.state();localDir=state.home;applySettings();paintIcons();
   $('footer-right').textContent=`UTF-8  │  LumaTerm ${state.version}`;
-  document.querySelector('.brand').innerHTML='<img class="brand-logo" src="logo.svg" alt="LumaTerm"><span class="version">PREVIEW</span>';
+  document.querySelector('.brand').innerHTML=`<img class="brand-logo" src="logo.svg" alt="LumaTerm"><span class="version">v${esc(state.version)}</span>`;
   document.querySelector('.welcome-symbol').innerHTML='<img src="brand-mark.svg" alt="">';
-  sidebarVisible=localStorage.getItem('sidebar-visible')!=='false';panelVisible=localStorage.getItem('panel-visible')!=='false';
-  installResizer('left-resizer',$('sidebar'),'left',180,440);installResizer('right-resizer',$('file-panel'),'right',240,650);
+  sidebarVisible=localStorage.getItem('sidebar-visible')!=='false';
+  buildLeftWorkspace();
+  installResizer('left-resizer',$('left-workspace'),'left',260,490);
   const sidebarButton=document.createElement('button');sidebarButton.id='sidebar-toggle';sidebarButton.className='icon-button';sidebarButton.title=tr('Sol paneli aç / kapat');sidebarButton.innerHTML=icon('panel-left');$('tabs-bar').prepend(sidebarButton);
   sidebarButton.onclick=()=>{sidebarVisible=!sidebarVisible;localStorage.setItem('sidebar-visible',String(sidebarVisible));layout();};
   const editButton=document.createElement('button');editButton.id='terminal-edit';editButton.className='icon-button';editButton.title=tr('Geçerli klasörde dosya aç');editButton.innerHTML=icon('file-pen-line');$('terminal-search-button').before(editButton);
   editButton.onclick=run(async()=>{const s=current();if(!s)return;const value=await promptValue(tr('Dosya aç'),tr('Geçerli klasöre göre dosya yolu yaz.'), '');if(!value?.trim())return;const target=s.kind==='ssh'?(value.startsWith('/')?value:remoteJoin(s.cwd||remoteDir,value)):(/^[a-z]:[\\/]/i.test(value)?value:localJoin(s.cwd||localDir,value));await openEditor(s.kind==='ssh'?s.id:null,target);});
-  const metrics=document.createElement('span');metrics.id='footer-metrics';$('footer-right').before(metrics);updateMetrics();setInterval(updateMetrics,2000);
+  const metrics=document.createElement('div');metrics.id='footer-metrics';$('footer-right').before(metrics);updateMetrics();setInterval(updateMetrics,2000);
   layout();
   document.querySelectorAll('[data-window]').forEach(b=>b.onclick=()=>api.windowAction(b.dataset.window));
   for(const id of ['new-terminal','tab-add','welcome-terminal'])on(id,()=>openSession({kind:'local'}));
   for(const id of ['add-connection','welcome-ssh'])on(id,()=>profileModal());
-  on('settings-button',settingsModal);on('palette-button',palette);on('save-workspace',saveWorkspace);
+  on('settings-button',settingsModal);on('save-workspace',saveWorkspace);
   $('connection-filter').oninput=sidebar;
   $('file-filter').oninput=filterFiles;
   on('split-button',()=>{if(tabs.size<2){toast(tr('Yan yana görünüm için en az iki oturum aç.'));return;}split=!split;layout();});
-  on('files-toggle',()=>{panelVisible=!panelVisible;localStorage.setItem('panel-visible',String(panelVisible));layout();});
+  on('files-toggle',()=>{sidebarVisible=true;localStorage.setItem('sidebar-visible','true');selectLeftTab('files');layout();});
   on('terminal-search-button',searchTerminal);on('search-close',()=>{$('terminal-search').hidden=true;current()?.term.focus();});
   on('search-next',()=>{if(!current()?.search.findNext($('terminal-search-input').value))toast(tr('Eşleşme bulunamadı.'));});on('search-prev',()=>current()?.search.findPrevious($('terminal-search-input').value));
   $('terminal-search-input').onkeydown=e=>{if(e.key==='Enter')$(e.shiftKey?'search-prev':'search-next').click();if(e.key==='Escape')$('search-close').click();};
@@ -271,8 +314,8 @@ async function init(){
   new ResizeObserver(scheduleFit).observe($('terminal-area'));
   document.addEventListener('keydown',run(async e=>{
     if($('modal').open)return;
-    const actions={newTab:()=>openSession({kind:'local'}),closeTab:()=>closeSession(active),settings:settingsModal,search:searchTerminal,palette};
-    for(const [key,shortcut] of Object.entries(state.settings.shortcuts))if(matches(e,shortcut)){e.preventDefault();await actions[key]();return;}
+    const actions={newTab:()=>openSession({kind:'local'}),closeTab:()=>closeSession(active),settings:settingsModal,search:searchTerminal};
+    for(const [key,shortcut] of Object.entries(state.settings.shortcuts))if(actions[key]&&matches(e,shortcut)){e.preventDefault();await actions[key]();return;}
     if(e.ctrlKey&&e.key==='Tab'){e.preventDefault();const ids=[...tabs.keys()];if(ids.length)activate(ids[(ids.indexOf(active)+(e.shiftKey?-1:1)+ids.length)%ids.length]);}
   }));
   window.__lumaReady=true;

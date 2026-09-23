@@ -30,6 +30,9 @@ module.exports=async({app,win,sessions,files,store})=>{
   await win.webContents.executeJavaScript('document.getElementById("modal").close(); document.getElementById("new-terminal").click()');
   await until(()=>win.webContents.executeJavaScript('document.querySelectorAll(".tab").length === 1'),'PowerShell tab');
   const local=[...sessions.items.values()].find(s=>s.kind==='local');assert.ok(local?.pty);
+  assert.equal(await win.webContents.executeJavaScript('document.querySelectorAll("[data-left-tab]").length'),2);
+  assert.equal(await win.webContents.executeJavaScript('document.getElementById("palette-button")'),null);
+  assert.equal(await win.webContents.executeJavaScript('document.getElementById("settings-button").textContent.trim()'),'Ayarlar');
   console.log('Local terminal created');
   let output='';const listener=local.pty.onData(data=>output+=data);sessions.input(local.id,"Write-Output ('LUMA' + '_ELECTRON_PTY_OK')\r");await until(()=>output.includes('LUMA_ELECTRON_PTY_OK'),'ConPTY output');listener.dispose();
   await sleep(500);await fs.writeFile(path.join(base,'terminal.png'),(await win.webContents.capturePage()).toPNG());
@@ -52,6 +55,7 @@ module.exports=async({app,win,sessions,files,store})=>{
     store.saveProfile({name:'Test SSH',host:'127.0.0.1',port:fixtureServer.port,username:'tester',password:'fixture-secret'});
     const p=store.data.profiles.at(-1);assert.ok(p.secret);assert.ok(!(await fs.readFile(store.file,'utf8')).includes('fixture-secret'));
     const a=await testSessions.open({kind:'ssh',profileId:p.id});assert.equal(checks,1);assert.equal(a.sftp,true);
+    const remoteMetrics=await testSessions.remoteMetrics(a.id);assert.equal(remoteMetrics.ramTotal,8192000*1024);assert.equal(remoteMetrics.uptime,12345.5);
     const entries=await testFiles.list(a.id,'/');assert.ok(entries.some(e=>e.name==='.hidden'));assert.ok(entries.some(e=>e.name==='hello.txt'));
     testSessions.input(a.id,'round-trip\r');await until(()=>sshEvents.some(e=>e.type==='data'&&e.data.includes('echo:round-trip')),'SSH shell echo');
     await testFiles.upload(a.id,[path.join(uploads,'Türkçe dosya.txt')],'/');await testFiles.download(a.id,['/Türkçe dosya.txt'],downloads);
@@ -77,6 +81,8 @@ module.exports=async({app,win,sessions,files,store})=>{
     await win.webContents.executeJavaScript('document.querySelector("[data-profile]").click()');
     await until(()=>win.webContents.executeJavaScript('document.querySelectorAll("#remote-files .file-row").length >= 2'),'SFTP UI');
     const rendererSSH=[...sessions.items.values()].find(s=>s.kind==='ssh');
+    await until(()=>win.webContents.executeJavaScript('document.querySelector("#footer-metrics .metric-card:first-child strong")?.textContent === "SSH"'),'remote status source');
+    assert.match(await win.webContents.executeJavaScript('document.querySelector("#footer-metrics").textContent'),/3.9 GB \/ 7.8 GB/);
     const staged=await win.webContents.executeJavaScript(`window.luma.filesDrag(${JSON.stringify(rendererSSH.id)},'/Türkçe dosya.txt')`);
     assert.deepEqual(await fs.readFile(staged.local),await fs.readFile(path.join(uploads,'Türkçe dosya.txt')));
     await sleep(300);

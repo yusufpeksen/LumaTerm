@@ -33,7 +33,7 @@ module.exports=async({win,sessions,store,base,firstId})=>{
   await evaluate('document.querySelector("select[name=language]").value="en"; document.getElementById("settings-submit").click()');
   await until(()=>evaluate('document.documentElement.lang === "en" && !document.getElementById("modal").open'),'English applied');
   assert.match(await evaluate('document.getElementById("new-terminal").textContent'),/New terminal/);
-  assert.match(await evaluate('document.getElementById("settings-button").textContent'),/Settings/);
+  assert.match(await evaluate('document.getElementById("settings-button").title'),/Settings/);
   await until(async()=>await localPath()===target,'English switch keeps cwd');
   assert.equal(await evaluate('document.querySelector("#local-files .file-name").textContent'),'Ayarlar');
   assert.equal(sessions.items.size,2);
@@ -44,7 +44,7 @@ module.exports=async({win,sessions,store,base,firstId})=>{
   await sleep(300);await fs.writeFile(path.join(base,'english-settings.png'),(await win.webContents.capturePage()).toPNG());
   await evaluate('document.querySelector("select[name=language]").value="tr"; document.getElementById("settings-submit").click()');
   await until(()=>evaluate('document.documentElement.lang === "tr"'),'switch back to Turkish');
-  assert.match(await evaluate('document.getElementById("settings-button").textContent'),/Ayarlar/);
+  assert.match(await evaluate('document.getElementById("settings-button").title'),/Ayarlar/);
   // Save English again to check persistence after the subsequent renderer reload.
   await evaluate('document.getElementById("settings-button").click()');await until(()=>evaluate('Boolean(document.querySelector("select[name=language]")) && document.getElementById("modal").open'),'language settings reopened');
   await evaluate('document.querySelector("select[name=language]").value="en"; document.getElementById("settings-submit").click()');

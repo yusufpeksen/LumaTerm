@@ -4,7 +4,7 @@ LumaTerm is an open-source Windows terminal, SSH client, and SFTP workspace. It 
 
 The desktop backend currently uses Electron. The evaluated Go/Wails migration, including required parity checks, is documented in [docs/go-migration.md](docs/go-migration.md).
 
-> LumaTerm is currently a preview. It is designed for Windows 10 1809+ and Windows 11 x64 and does not claim full feature parity with Windows Terminal or MobaXterm.
+LumaTerm is designed for Windows 10 1809+ and Windows 11 x64. Its scope and current limitations are documented below.
 
 ## Install
 
@@ -24,7 +24,8 @@ Preview builds are currently unsigned, so Windows SmartScreen may display an unk
 - **Directory synchronization:** The file panel follows `cd`, `Set-Location`, `Push-Location`, and `Pop-Location` in PowerShell/CMD. Bash and Zsh tracking can be enabled per SSH session.
 - **Multiple sessions:** Open many local or SSH tabs, switch quickly, or show two terminals side by side.
 - **Built-in text editor:** Open local and SFTP text files directly from the file pane, save with Ctrl+S, and avoid overwriting files changed elsewhere.
-- **Session controls:** Rename or pin tabs, resize or hide either sidebar, and monitor CPU, memory, connection age, activity age, and transfer totals in the status bar.
+- **Session controls:** Rename or pin tabs, resize or hide the left workspace, and monitor device CPU, memory, uptime, connection age, and network traffic in the status bar. An SSH tab samples the connected Linux server through a separate SSH channel.
+- **Tabbed workspace:** Files and Sessions live in the resizable left panel; new-terminal and settings controls stay in the top bar.
 - **Saved workspaces:** Reopen a named collection of local and SSH tabs.
 - **English and Turkish UI:** English is the default for new installations; Turkish remains available in Settings.
 
@@ -32,14 +33,16 @@ Preview builds are currently unsigned, so Windows SmartScreen may display an unk
 
 ### Local terminals
 
-Select PowerShell, PowerShell 7, Command Prompt, or WSL from the sidebar. You can configure another executable and a start directory in Settings. LumaTerm does not modify PowerShell profile files; prompt and directory integration exists only for the current session.
+Select PowerShell, PowerShell 7, Command Prompt, or WSL from the **Sessions** tab on the left. You can configure another executable and a start directory in Settings. LumaTerm does not modify PowerShell profile files; prompt and directory integration exists only for the current session.
 
 ### SSH and SFTP
 
-1. Select the **+** button next to **SSH Connections**.
+1. Open the left **Sessions** tab and select the **+** button next to **SSH Connections**.
 2. Enter the host, port, username, and password or private key.
 3. Verify the server's SHA-256 host fingerprint with the server administrator on first connection.
 4. Use the file panel to browse and transfer remote files.
+
+The status bar shows CPU, RAM, uptime, and RX/TX rates from the active Linux SSH server when its `/proc` files are available. On other remote operating systems or restricted accounts, unavailable values appear as `—` instead of showing local Windows values.
 
 If a stored host key changes, LumaTerm refuses the connection. Remove the old key under **Settings → Security** only after independently confirming that the change is legitimate.
 
@@ -69,7 +72,6 @@ These examples expose the remote web service at `127.0.0.1:8080` and the remote 
 | Close tab | `Ctrl+Shift+W` |
 | Next / previous tab | `Ctrl+Tab` / `Ctrl+Shift+Tab` |
 | Search terminal output | `Ctrl+Shift+F` |
-| Command palette | `Ctrl+Shift+P` |
 | Settings | `Ctrl+,` |
 | Copy | `Ctrl+Shift+C` |
 | Paste | `Ctrl+V` |
@@ -96,7 +98,7 @@ See [SECURITY.md](SECURITY.md) to report a vulnerability privately.
 - No ProxyJump, SSH agent forwarding, remote port forwarding, dynamic SOCKS proxy, FIDO keys, or interactive MFA flow yet.
 - No transfer pause/resume, persistent transfer queue, or automatic recovery of partial remote uploads.
 - Bash/Zsh directory tracking can conflict with `tmux`, nested SSH sessions, or prompt frameworks that replace `PROMPT_COMMAND` or `precmd_functions`.
-- The file manager does not yet edit remote files, permissions, or ownership and does not follow symbolic links.
+- The file manager does not yet edit remote permissions or ownership and does not follow symbolic links.
 - Windows remote shells do not receive automatic directory tracking.
 - Builds are unsigned and can trigger SmartScreen.
 

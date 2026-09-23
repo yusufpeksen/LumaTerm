@@ -58,10 +58,12 @@ function trusted(event) { if(event.sender !== win.webContents || event.senderFra
 function handle(name, fn) { ipcMain.handle(name, async (event,...args) => { trusted(event); return fn(...args); }); }
 function register() {
   handle('state', () => ({ ...store.public(), home: os.homedir(), version: app.getVersion() }));
-  handle('metrics', id => {
+  handle('metrics', async id => {
+    const session=id&&sessions.items.has(id)?sessions.stats(id):null;
+    if(session?.kind==='ssh')return {source:'ssh',session,host:sessions.get(id).spec.profileId?store.data.profiles.find(p=>p.id===sessions.get(id).spec.profileId)?.host:null,remote:await sessions.remoteMetrics(id),transfer:{...files.totals}};
     const cpus=os.cpus(),totals=cpus.reduce((acc,cpu)=>{const times=cpu.times;acc.idle+=times.idle;acc.total+=Object.values(times).reduce((sum,value)=>sum+value,0);return acc;},{idle:0,total:0});
     const cpu=previousCpu?100*(1-(totals.idle-previousCpu.idle)/(totals.total-previousCpu.total)):0;previousCpu=totals;
-    return {cpu:Number.isFinite(cpu)?Math.max(0,Math.min(100,cpu)):0,ram:os.totalmem()-os.freemem(),ramTotal:os.totalmem(),session:id&&sessions.items.has(id)?sessions.stats(id):null,transfer:{...files.totals}};
+    return {source:'local',cpu:Number.isFinite(cpu)?Math.max(0,Math.min(100,cpu)):0,ram:os.totalmem()-os.freemem(),ramTotal:os.totalmem(),uptime:os.uptime(),session,transfer:{...files.totals}};
   });
   handle('editor-read',(id,target)=>editor.read(id,target));
   handle('editor-save',(id,target,content,version)=>editor.save(id,target,content,version));
@@ -127,7 +129,8 @@ app.whenReady().then(async()=>{
     win = new BrowserWindow({ width:1450,height:920,minWidth:980,minHeight:620,frame:false,backgroundColor:'#101218',show:!smoke&&!packageCheck,icon:path.join(__dirname,'../assets/icon.png'),webPreferences:{ preload:path.join(__dirname,'preload.cjs'),nodeIntegration:false,contextIsolation:true,sandbox:true,spellcheck:false,offscreen:smoke||packageCheck } });
     Menu.setApplicationMenu(null);
     win.webContents.setWindowOpenHandler(()=>({action:'deny'}));
-    win.webContents.on('will-navigate',event=>event.preventDefault());
+    const appPage=pathToFileURL(page).href;
+    win.webContents.on('will-navigate',(event,url)=>{if(url!==appPage)event.preventDefault();});
     win.webContents.session.setPermissionRequestHandler((wc,permission,callback)=>callback(false));
     win.on('close',event=> {
       if(!allowClose && sessions.items.size && store.data.settings.confirmClose && !smoke) { event.preventDefault(); confirm(tr('LumaTerm kapatılsın mı?'), tr('Açık oturumlar ve devam eden aktarımlar kapanacak.')).then(ok=>{ if(ok) { allowClose=true; win.close(); } }); }

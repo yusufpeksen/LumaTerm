@@ -15,13 +15,14 @@ async function local({win,sessions,id,base}){
   await until(()=>evaluate(`document.querySelector('.tab[data-id="${id}"] > span:nth-of-type(2)').textContent==='Local work'`),'renamed tab');
   assert.equal(await evaluate(`document.querySelector('.tab[data-id="${id}"]').classList.contains('pinned')`),true);
   await evaluate(`document.querySelector('.tab[data-id="${id}"] .tab-pin').click()`);
-  await evaluate('document.getElementById("sidebar-toggle").click()');
+  await evaluate('if(document.getElementById("left-workspace").hidden)document.getElementById("sidebar-toggle").click();document.getElementById("sidebar-toggle").click()');
   sessions.input(id,"1..120 | ForEach-Object { Write-Output ('LONG-OUTPUT-' + $_ + ('x' * 180)) }\r");
   await until(()=>evaluate('document.querySelector(".terminal-pane.focused .xterm-rows").textContent.includes("LONG-OUTPUT-120")'),'long terminal output');
-  const geometry=await evaluate('(() => {const pane=document.querySelector(".terminal-pane.focused"), viewport=pane.querySelector(".xterm-viewport"),screen=pane.querySelector(".xterm-screen"),footer=document.querySelector("footer");return {screenRight:screen.getBoundingClientRect().right,viewportRight:viewport.getBoundingClientRect().right,viewportBottom:viewport.getBoundingClientRect().bottom,footerTop:footer.getBoundingClientRect().top};})()');
-  assert.ok(geometry.screenRight<=geometry.viewportRight+2,'terminal content must fit before scrollbar: '+JSON.stringify(geometry));
+  const geometry=await evaluate('(() => {const pane=document.querySelector(".terminal-pane.focused"), viewport=pane.querySelector(".xterm-viewport"),screen=pane.querySelector(".xterm-screen"),frame=pane.querySelector(".terminal-frame"),scrollbars=[...pane.querySelectorAll(".scrollbar")].map(el=>({name:el.className,parent:el.parentElement?.className,grandparent:el.parentElement?.parentElement?.className,cssRight:getComputedStyle(el).right,left:el.getBoundingClientRect().left,right:el.getBoundingClientRect().right})),footer=document.querySelector("footer");return {screenRight:screen.getBoundingClientRect().right,frameRight:frame.getBoundingClientRect().right,scrollbarLeft:scrollbars.find(x=>x.name.includes("vertical"))?.left,scrollbars,viewportRight:viewport.getBoundingClientRect().right,viewportBottom:viewport.getBoundingClientRect().bottom,footerTop:footer.getBoundingClientRect().top};})()');
+  assert.ok(geometry.scrollbarLeft-geometry.screenRight>=16,'terminal text must end at least 16px before its scrollbar: '+JSON.stringify(geometry));
   assert.ok(geometry.viewportBottom<=geometry.footerTop+2,'terminal viewport must end before footer');
-  assert.equal(await evaluate('document.getElementById("sidebar").hidden'),true);
+  await fs.writeFile(path.join(base,'long-output.png'),(await win.webContents.capturePage()).toPNG());
+  assert.equal(await evaluate('document.getElementById("left-workspace").hidden'),true);
   await evaluate('document.getElementById("sidebar-toggle").click()');
   const source=path.join(base,'editor-local.txt');await fs.writeFile(source,'local before');
   const loaded=await evaluate(`window.luma.editorRead(null,${JSON.stringify(source)})`);
